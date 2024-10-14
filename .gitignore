@@ -1,1 +1,4 @@
-lex.src
+/build
+compile_commands.json
+/ref
+/lex.src
