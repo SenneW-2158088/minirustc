@@ -9,8 +9,8 @@
 %}
 
 %%
-"println!\(\"\{[a-zA-Z0-9_]+\}\"\)" { return PRINTVAR; }
-"println!\(\"[^\"]*\"\)" { return PRINTSTRING; }
+"println!(\"{".+"}\")"    { return PRINTVAR; }
+"println!(\""[^\"]*"\")"    { return PRINTSTRING; }
 [ \t\n]+        { /* Ignore whitespace */ }
 "fn"            { return FN; }
 "let"           { return LET; }
