@@ -3,3 +3,5 @@ compile_commands.json
 /ref
 /lex.src
 .cache/*
+result/
+.DS_Store

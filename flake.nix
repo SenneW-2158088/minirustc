@@ -40,7 +40,7 @@
         };
 
         packages.default = pkgs.stdenv.mkDerivation {
-          name = "mini-rustc";
+          name = "minirust-0.1";
           src = ./.;
 
           nativeBuildInputs = with pkgs; [
@@ -51,15 +51,12 @@
           ];
 
           buildPhase = ''
-            echo "$(ls -la)"
+            cmake --build .
           '';
 
           installPhase = ''
-            echo "Installing..."
-            echo "Build directory contents:"
-            ls -la build
-            mkdir -p $out/bin
-            find build -type f -executable -exec install -m755 {} $out/bin/ \;
+            mkdir -p $out
+            cp ./bin/* $out/
           '';
         };
       }
