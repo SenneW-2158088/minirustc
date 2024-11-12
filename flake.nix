@@ -51,13 +51,15 @@
           ];
 
           buildPhase = ''
-            cmake -B build
-            cmake --build build
+            echo "$(ls -la)"
           '';
 
           installPhase = ''
+            echo "Installing..."
+            echo "Build directory contents:"
+            ls -la build
             mkdir -p $out/bin
-            cp build/* $out/bin/
+            find build -type f -executable -exec install -m755 {} $out/bin/ \;
           '';
         };
       }

@@ -7,7 +7,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/bin)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(FLEX 2.5.13 REQUIRED)
-find_package(BISON REQUIRED)
+find_package(BISON 3.2 REQUIRED)
 
 if(APPLE)
   set(FLEX_USE_STATIC_LIB ON)
@@ -45,7 +45,7 @@ set(GENERATED_SOURCES
 
 # Main executable
 add_executable(mrc
-    src/main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
     ${GENERATED_SOURCES}
 )
 

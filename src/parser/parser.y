@@ -1,6 +1,10 @@
+%require "3.2"
+// %language "c++"
+
 %{
 #include "lexer/lexer.h"
 void yyerror(const char* str);
+void yylex(int* str);
 %}
 
 // Token declarations
