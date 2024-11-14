@@ -5,6 +5,7 @@
 
     namespace MRC {
         class Scanner; // Forward declaration
+        struct Location;
     }
 
 }
@@ -13,33 +14,43 @@
     #include <iostream>
     #include "lexer/Scanner.hpp"
     #include "parser/parser.h"
-    #include "location.hh"
 }
 
 
 %header
 %verbose
 
-%parse-param { MRC::Scanner  &scanner  }
+%lex-param { EzAquarii::Scanner &scanner }
+%parse-param { MRC::Scanner  &scanner }
+
 
 %code {
-    #define yylex scanner.yylex
+    static MRC::Parser::symbol_type yylex(MRC::Scanner &scanner) {
+        return scanner.scan();
+    }
 }
 
 
-%define api.parser.class { Parser }
 %define api.namespace { MRC }
-%locations
+%define api.parser.class { Parser }
+// %define api.location.type { Location }
 
+%define api.value.type variant
+%define api.token.prefix {TOKEN_}
+%define api.token.constructor
+%define api.token.raw
+
+%locations
 
 %defines
 
 %token TEST
+%token EOF
 
 %%
 program
-    : /* empty */
-    | program TEST
+    : { std::cout << "Hellof" << std::endl;}
+    | TEST
     ;
 %%
 

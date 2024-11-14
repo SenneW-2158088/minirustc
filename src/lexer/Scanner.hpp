@@ -4,18 +4,20 @@
 #include <FlexLexer.h>
 #endif
 
+#undef YY_DECL
+#define YY_DECL MRC::Parser::symbol_type MRC::Scanner::scan()
+
 #include "parser/parser.h"
 
 namespace MRC {
 class Scanner : public yyFlexLexer {
-public:
+   public:
     Scanner() {}
 
-    virtual int yylex(Parser::semantic_type *const lval, Parser::location_type *location);
-
+    virtual Parser::symbol_type scan();
     virtual ~Scanner() {}
 
-private:
-  Parser::semantic_type *yylval = nullptr;
+   private:
+    Parser::semantic_type* yylval = nullptr;
 };
-} // namespace MRC
+}  // namespace MRC

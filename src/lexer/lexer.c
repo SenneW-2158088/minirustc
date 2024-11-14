@@ -1,9 +1,5 @@
 %{
     #include "lexer/Scanner.hpp"
-    using namespace MRC;
-
-    #undef  YY_DECL
-    #define YY_DECL int Scanner::yylex(Parser::semantic_type *yylval, Parser::location_type *yylloc)
 %}
 
 %option c++
@@ -13,9 +9,10 @@
 %%
 
 %{
-    using Token = MRC::Parser::token;
+    using Token = MRC::Parser::token; // TODO: REMOVE
 %}
 
-"test"    { return Token::TEST; }
-.         { /* Skip everything else */ }
+"test"      { return MRC::Parser::make_TEST(MRC::location()); }
+<<EOF>>     { return MRC::Parser::make_EOF(MRC::location()); }
+.           { /* Skip everything else */ }
 %%
