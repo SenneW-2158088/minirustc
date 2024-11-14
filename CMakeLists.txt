@@ -53,8 +53,3 @@ target_include_directories(mrc PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_BINARY_DIR}/src
 )
-
-# Link against Flex and Bison libraries
-if(NOT APPLE)
-  target_link_libraries(mrc PRIVATE ${FLEX_LIBRARIES})
-endif()
