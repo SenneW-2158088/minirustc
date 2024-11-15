@@ -1,10 +1,12 @@
 #include "lexer/Scanner.hpp"
 #include "parser/parser.h"
+#include "driver/Driver.hpp"
 
 int main(int argc, char* argv[]) {
-    MRC::Scanner scanner;
-    MRC::Parser parser(scanner);
-    parser();
+
+    // read options
+    MRC::Driver driver{};
+    driver.parse("test test test test test");
 
     return 0;
 }

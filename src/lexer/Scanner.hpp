@@ -12,12 +12,13 @@
 namespace MRC {
 class Scanner : public yyFlexLexer {
    public:
-    Scanner() {}
+    Scanner(Driver &driver) : m_driver(driver) {}
 
     virtual Parser::symbol_type scan();
     virtual ~Scanner() {}
 
    private:
-    Parser::semantic_type* yylval = nullptr;
+   Driver &m_driver;
+   Parser::semantic_type* yylval = nullptr;
 };
 }  // namespace MRC

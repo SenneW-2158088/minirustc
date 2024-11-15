@@ -43,9 +43,13 @@ set(GENERATED_SOURCES
     ${BISON_Parser_OUTPUTS}
 )
 
+set(DRIVER
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/driver/Driver.cpp
+)
 # Main executable
 add_executable(mrc
     ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
+    ${DRIVER}
     ${GENERATED_SOURCES}
 )
 
