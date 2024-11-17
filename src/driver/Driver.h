@@ -1,16 +1,19 @@
 #pragma once
 
-#include <fstream>
+#include "lexer/Scanner.h"
+#include "parser/parser.h"
+
+#include "ast/Ast.h"
+#include "util/util.h"
+
 #include <istream>
 #include <sstream>
 #include <string>
 
-#include "lexer/Scanner.hpp"
-#include "parser/parser.h"
-
 namespace MRC {
 class Driver {
 private:
+  U<AST::Ast> _ast;
   Scanner _scanner;
   Parser _parser;
 

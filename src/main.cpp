@@ -1,6 +1,6 @@
-#include "lexer/Scanner.hpp"
+#include "lexer/Scanner.h"
 #include "parser/parser.h"
-#include "driver/Driver.hpp"
+#include "driver/Driver.h"
 
 int main(int argc, char* argv[]) {
 

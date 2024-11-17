@@ -20,14 +20,14 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/src/parser)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/lexer)# Generate the lexer
 flex_target(Lexer
     ${CMAKE_CURRENT_SOURCE_DIR}/src/lexer/lexer.l
-    ${CMAKE_CURRENT_BINARY_DIR}/src/lexer/lexer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/lexer/lexer.cpp
     DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/src/lexer/lexer.h
 )
 
 # Generate the parser
 bison_target(Parser
     ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/parser.y
-    ${CMAKE_CURRENT_BINARY_DIR}/src/parser/parser.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/parser/parser.cpp
     DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/src/parser/parser.h
 )
 
@@ -44,12 +44,12 @@ set(GENERATED_SOURCES
 )
 
 set(DRIVER
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/driver/Driver.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/driver/Driver.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/driver/Driver.cpp
 )
 
 set(AST
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/ast/AST.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ast/AST.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ast/Expr.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ast/Stmt.cpp
 )

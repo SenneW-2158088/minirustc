@@ -1,10 +1,10 @@
-#include "Driver.hpp"
+#include "Driver.h"
 #include "parser/parser.h"
 
 #include <istream>
 #include <string>
 
-MRC::Driver::Driver() : _scanner(*this), _parser(this, &_scanner) {}
+MRC::Driver::Driver() : _ast(), _scanner(*this), _parser(this, &_scanner) {}
 
 bool MRC::Driver::parse(const std::string &input) {
   std::istringstream stream{input};

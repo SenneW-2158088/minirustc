@@ -1,6 +1,6 @@
 %{
-    #include "lexer/Scanner.hpp"
-    #include "driver/Driver.hpp"
+    #include "lexer/Scanner.h"
+    #include "driver/Driver.h"
 %}
 
 %option c++
@@ -21,8 +21,8 @@ INTEGER     ({BIN_DIGIT}+|{OCT_DIGIT}+|{DEC_DIGIT}+|{HEX_DIGIT}+)
     #define YY_USER_ACTION m_driver.location.step();  m_driver.location.columns(yyleng);
 %}
 
-{INTEGER}+    { int lex = std::stoi(yytext); return MRC::Parser::make_DEC_DIGIT(lex, m_driver.location); }
-"test"      { return MRC::Parser::make_TEST(m_driver.location); }
-.           { /* Skip everything else */ }
-<<EOF>>     { return MRC::Parser::make_EOF(m_driver.location); }
+{INTEGER}+      { return MRC::Parser::make_INTEGER_LITERAL(yytext, m_driver.location); }
+"test"          { return MRC::Parser::make_TEST(m_driver.location); }
+.               { /* Skip everything else */ }
+<<EOF>>         { return MRC::Parser::make_EOF(m_driver.location); }
 %%

@@ -8,14 +8,15 @@
         class Driver;
         struct Location;
     }
-
 }
 
 %code top {
     #include <iostream>
-    #include "driver/Driver.hpp"
-    #include "lexer/Scanner.hpp"
+    #include "driver/Driver.h"
+    #include "lexer/Scanner.h"
     #include "parser/parser.h"
+
+    // Let's say that every token is of type string and later add a custom token type if needed
 }
 
 
@@ -49,38 +50,36 @@
 
 /* Token Definitions */
 // Integers
-%token  <int>   DEC_DIGIT
-%token  <int>   BIN_DIGIT
-%token  <double>   HEX_DIGIT
+%token  <std::string>   INTEGER_LITERAL
 
 // Misc
 %token TEST 1
 %token EOF  0
 
-%type <std::string> expr
+%type <std::string> statement
+%type <std::string> expression
+%type <std::string> literal_expression
 
-%type <std::string> integer_literal
-// %type <std::string> decimal_literal
-// %type <std::string> binary_literal
 
 %%
 program
-    : expr EOF              { std::cout << "expr" << std::endl;}
-    | EOF                   { std::cout << "empty file" << std::endl; }
+    : statement EOF              { std::cout << "expr" << std::endl; driver->update_location(); }
+    | EOF                        { std::cout << "empty file" << std::endl; }
     ;
 
-expr
-    : TEST expr             { $$ = "friend"; std::cout << "test expr" << @1 << std::endl; }
-    | TEST                  { $$ = "friend"; std::cout << "test" << std::endl; }
-    | integer_literal expr  { $$ = "friend"; std::cout << "integer literal" << std::endl; }
+/* Statements */
+statement
+    : expression
     ;
 
-/* Literals */
-integer_literal
-    : DEC_DIGIT     { $$ = "integer literal"; std::cout << "Parsed decimal: " << $1 << std::endl; }
-    | HEX_DIGIT     { $$ = "integer literal"; std::cout << "Parsed hexidecimal: " << $1 << std::endl; }
+/* Expressions */
+expression
+    : literal_expression
     ;
-;
+
+literal_expression
+    : INTEGER_LITERAL
+    ;
 
 %%
 
