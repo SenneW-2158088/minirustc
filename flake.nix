@@ -19,13 +19,11 @@
     devShells = forEachSupportedSystem ({pkgs}: {
       default =
         pkgs.mkShell.override {
-          stdenv = pkgs.llvmPackages_17.stdenv; # Use LLVM 17 toolchain
+          # stdenv = pkgs.llvmPackages_17.stdenv; # Use LLVM 17 toolchain
         }
         {
           packages = with pkgs; [
             # C++ toolchain
-            clang
-            libcxx
             clang-tools # for clangd
 
             # Build tools
@@ -33,11 +31,6 @@
             bison
             flex
           ];
-
-          shellHook = ''
-            export CXXFLAGS="-nostdinc++ -I${pkgs.libcxx}/include/c++/v1"
-            export LDFLAGS="-L${pkgs.libcxx}/lib"
-          '';
         };
     });
   };

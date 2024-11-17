@@ -3,10 +3,22 @@
 
 %code requires {
 
+    #include "ast/Ast.h"
+    #include "lexer/Token.h"
+
+
     namespace MRC {
         class Scanner; // Forward declaration
         class Driver;
+        struct Token;
         struct Location;
+    }
+
+    namespace MRC::AST {
+        struct Ast;
+        struct Expr;
+        struct Stmt;
+        struct Lit;
     }
 }
 
@@ -15,8 +27,7 @@
     #include "driver/Driver.h"
     #include "lexer/Scanner.h"
     #include "parser/parser.h"
-
-    // Let's say that every token is of type string and later add a custom token type if needed
+    #include "lexer/Token.h"
 }
 
 
@@ -26,22 +37,20 @@
 %lex-param { MRC::Scanner *scanner }
 %parse-param { MRC::Driver  *driver }
 %parse-param { MRC::Scanner *scanner }
+%parse-param { MRC::AST::Ast *ast }
 
 
 %code {
-    static MRC::Parser::symbol_type yylex(MRC::Scanner *scanner) {
-        return scanner->scan();
-    }
+    #define yylex scanner->yylex
 }
-
 
 %define api.namespace { MRC }
 %define api.parser.class { Parser }
 // %define api.location.type { Location } // Maybe later for custom locations
 
-%define api.value.type variant
+%define api.value.type { MRC::Token }
 %define api.token.prefix {TOKEN_}
-%define api.token.constructor
+// %define api.token.constructor
 %define api.token.raw
 
 %locations
@@ -50,16 +59,15 @@
 
 /* Token Definitions */
 // Integers
-%token  <std::string>   INTEGER_LITERAL
+%token INTEGER_LITERAL
 
 // Misc
 %token TEST 1
 %token EOF  0
 
-%type <std::string> statement
-%type <std::string> expression
-%type <std::string> literal_expression
-
+%type <MRC::AST::Stmt>  statement
+%type <MRC::AST::Expr>  expression
+%type <MRC::AST::Lit>   literal
 
 %%
 program
@@ -74,10 +82,10 @@ statement
 
 /* Expressions */
 expression
-    : literal_expression
+    : literal
     ;
 
-literal_expression
+literal
     : INTEGER_LITERAL
     ;
 
