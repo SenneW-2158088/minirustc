@@ -47,23 +47,41 @@
 
 %defines
 
-%token TEST
+/* Token Definitions */
+// Integers
+%token  <int>   DEC_DIGIT
+%token  <int>   BIN_DIGIT
+%token  <double>   HEX_DIGIT
+
+// Misc
+%token TEST 1
 %token EOF  0
 
 %type <std::string> expr
 
-%left TEST
+%type <std::string> integer_literal
+// %type <std::string> decimal_literal
+// %type <std::string> binary_literal
 
 %%
 program
-    : expr EOF  { std::cout << "expr" << std::endl;}
-    | EOF       { std::cout << "empty file" << std::endl; }
+    : expr EOF              { std::cout << "expr" << std::endl;}
+    | EOF                   { std::cout << "empty file" << std::endl; }
     ;
 
 expr
-    : TEST expr     { $$ = "friend"; std::cout << "test expr" << std::endl; }
-    | TEST          { $$ = "friend"; std::cout << "test" << std::endl; }
+    : TEST expr             { $$ = "friend"; std::cout << "test expr" << @1 << std::endl; }
+    | TEST                  { $$ = "friend"; std::cout << "test" << std::endl; }
+    | integer_literal expr  { $$ = "friend"; std::cout << "integer literal" << std::endl; }
     ;
+
+/* Literals */
+integer_literal
+    : DEC_DIGIT     { $$ = "integer literal"; std::cout << "Parsed decimal: " << $1 << std::endl; }
+    | HEX_DIGIT     { $$ = "integer literal"; std::cout << "Parsed hexidecimal: " << $1 << std::endl; }
+    ;
+;
+
 %%
 
 namespace MRC {

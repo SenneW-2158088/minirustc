@@ -22,6 +22,7 @@
 
             # Clang and LSP
             clang-tools
+            libcxx
             clang
 
             # Parser generators
@@ -30,6 +31,7 @@
           ];
 
           shellHook = ''
+            export CPLUS_INCLUDE_PATH="${pkgs.libcxx}/include/c++/v1:${pkgs.clang}/resource-root/include"
             echo "C++ development environment loaded!"
             echo "Available tools:"
             echo " - CMake: $(cmake --version | head -n1)"
@@ -45,7 +47,7 @@
 
           nativeBuildInputs = with pkgs; [
             cmake
-            clang
+            clang-tools
             bison
             flex
           ];
