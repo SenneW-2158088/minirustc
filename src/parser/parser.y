@@ -42,15 +42,15 @@
 
 %code {
     #define yylex scanner->yylex
+    using Tok = MRC::Token;
 }
 
 %define api.namespace { MRC }
 %define api.parser.class { Parser }
 // %define api.location.type { Location } // Maybe later for custom locations
 
-%define api.value.type { MRC::Token }
+%define api.value.type variant
 %define api.token.prefix {TOKEN_}
-// %define api.token.constructor
 %define api.token.raw
 
 %locations
@@ -59,34 +59,42 @@
 
 /* Token Definitions */
 // Integers
-%token INTEGER_LITERAL
+%token <MRC::Token> INTEGER_LITERAL
 
 // Misc
 %token TEST 1
 %token EOF  0
 
-%type <MRC::AST::Stmt>  statement
-%type <MRC::AST::Expr>  expression
-%type <MRC::AST::Lit>   literal
+%type <std::string>  statement
+%type <std::string>  expression
+%type <std::string>   literal
 
 %%
 program
-    : statement EOF              { std::cout << "expr" << std::endl; driver->update_location(); }
-    | EOF                        { std::cout << "empty file" << std::endl; }
+    : statement EOF              { // std::cout << "expr" << std::endl;
+    }
+    | EOF                        { // std::cout << "empty file" << std::endl;
+    }
     ;
 
 /* Statements */
 statement
-    : expression
+    : expression                {
+        // std::cout << "Parsing expression" << std::endl;
+        $$ = $1;
+    }
     ;
 
 /* Expressions */
 expression
-    : literal
+    : literal                   {
+        // std::cout << "Parsing literal" << std::endl;
+        $$ = $1;
+    }
     ;
 
 literal
-    : INTEGER_LITERAL
+    : INTEGER_LITERAL           { $$ = "hlello"; std::cout << $1 << std::endl;}
     ;
 
 %%

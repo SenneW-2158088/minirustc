@@ -24,11 +24,11 @@ BIN_LIT     0b{BIN_DIGIT}+
 OCT_LIT     0o{OCT_DIGIT}+
 HEX_LIT     0x{HEX_DIGIT}+
 DEC_LIT     {DEC_DIGIT}+
-INTEGER     ({DEC_LIT}|{HEX_LIT}|{OCT_LIT}|{BIN_LIT})
+INTEGER     ({BIN_DIGIT}+|{OCT_DIGIT}+|{DEC_DIGIT}+|{HEX_DIGIT}+)
 
 /* Suffixes */
-INT_SUFFIX      (i8|i16|i32|i64|u8|u16|u32|u64|usize)
-FLOAT_SUFFIX    (f32|f64)
+INT_SUFFIX  (i8|i16|i32|i64|i128|isize|u8|u16|u32|u64|u128|usize)
+FLOAT_SUFFIX (f32|f64|e[0-9]+)
 
 %x EXPECT_INT_SUFFIX
 
@@ -42,37 +42,26 @@ FLOAT_SUFFIX    (f32|f64)
 
 %}
 
-{INTEGER} {
-    std::cout << "got integer: " << yytext << std::endl;
-    symbol = yytext;
-    BEGIN(EXPECT_INT_SUFFIX);
-}
-
-<EXPECT_INT_SUFFIX>{FLOAT_SUFFIX}  {
-    std::cout << "parsing float suffix" << std::endl;
-    BEGIN(INITIAL);
-    return MRC::Token(symbol, yytext, MRC::Parser::token_type::TOKEN_INTEGER_LITERAL, m_driver.location);
-}
-
 <EXPECT_INT_SUFFIX>{INT_SUFFIX}    {
     std::cout << "parsing int suffix" << std::endl;
     BEGIN(INITIAL);
     return MRC::Token(symbol, yytext, MRC::Parser::token_type::TOKEN_INTEGER_LITERAL, m_driver.location);
 }
 
-<EXPECT_INT_SUFFIX>.    {
-    std::cout << "no suffix character: " << yytext << std::endl;
-    yyless(1);
-    BEGIN(INITIAL);
-    return MRC::Token(symbol, yytext, MRC::Parser::token_type::TOKEN_INTEGER_LITERAL, m_driver.location);
+{INTEGER}    {
+    symbol = yytext;
+    BEGIN(EXPECT_INT_SUFFIX);
 }
-<EXPECT_INT_SUFFIX><<EOF>>    {
-    std::cout << "no suffix character: " << yytext << std::endl;
+
+<EXPECT_INT_SUFFIX>{INT_SUFFIX}    {
     BEGIN(INITIAL);
     return MRC::Token(symbol, yytext, MRC::Parser::token_type::TOKEN_INTEGER_LITERAL, m_driver.location);
 }
 
-.                   { /* Skip everything else */ }
-
-<<EOF>>             { return MRC::Token("", "", MRC::Parser::token_type::TOKEN_EOF, m_driver.location); }
+<EXPECT_INT_SUFFIX>{FLOAT_SUFFIX}  {
+    BEGIN(INITIAL);
+    return MRC::Token(symbol, yytext, MRC::Parser::token_type::TOKEN_INTEGER_LITERAL, m_driver.location);
+}
+.                       { /* Skip everything else */ }
+<<EOF>>                 { return MRC::Token(); }
 %%

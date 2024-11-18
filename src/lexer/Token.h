@@ -22,17 +22,17 @@ namespace MRC {
             Opt<Symbol> suffix,
             TokenType type,
             location span
-        ) : symbol(symbol), suffix(suffix) {}
-    };
-}
+        ) : symbol(symbol), suffix(suffix), type(type), span(span) {}
 
-inline std::ostream& operator<<(std::ostream& os, const MRC::Token& token) {
-    os << "Token{symbol=\"" << token.symbol << "\"";
-    if (token.suffix) {
-        os << ", suffix=\"" << *token.suffix << "\"";
-    }
-    os << ", type=" << token.type
-       << ", span=" << token.span;
-    os << "}";
-    return os;
+        friend inline std::ostream& operator<<(std::ostream& os, const MRC::Token &token) {
+            os << "Token{symbol=\"" << token.symbol << "\"";
+            if (token.suffix) {
+                os << ", suffix=\"" << *token.suffix << "\"";
+            }
+            os << ", type=" << token.type
+               << ", span=" << token.span;
+            os << "}";
+            return os;
+        }
+    };
 }
