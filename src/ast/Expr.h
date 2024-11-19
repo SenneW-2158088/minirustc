@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ast/Lit.h"
+#include "struct/Pat.h"
 #include "util/util.h"
 
 #include <variant>
@@ -9,6 +10,7 @@ namespace MRC::AST {
 
 struct Expr; // Forward declare
 
+/* Literal expression */
 struct LiteralExpr {
   U<Lit> lit;
 
@@ -17,6 +19,7 @@ public:
   explicit LiteralExpr(U<Lit> lit) : lit(std::move(lit)) {}
 };
 
+/* Expression expression */
 struct ExprExpr {
   U<Expr> expr;
 
@@ -25,8 +28,19 @@ public:
   explicit ExprExpr(U<Expr> expr) : expr(std::move(expr)) {}
 };
 
+/* Let expression */
+struct LetExpr {
+  U<Pat> pattern;
+  U<Expr> expr;
+
+public:
+  LetExpr() = default;
+  explicit LetExpr(U<Pat> pattern, U<Expr> expr)
+      : pattern(std::move(pattern)), expr(std::move(expr)) {}
+};
+
 struct Expr {
-  using ExprKind = std::variant<LiteralExpr, ExprExpr>;
+  using ExprKind = std::variant<LiteralExpr, ExprExpr, LetExpr>;
   ExprKind kind;
 
 public:
@@ -36,6 +50,7 @@ public:
 
   static Expr makeLit(U<Lit> lit) { return Expr(LiteralExpr(std::move(lit))); }
   static Expr makeExpr(U<Expr> expr) { return Expr(ExprExpr(std::move(expr))); }
+  static Expr makeLet (U<Pat> pattern, U<Expr> expr) { return Expr(LetExpr(std::move(pattern), std::move(expr))); }
 };
 
 } // namespace MRC::AST

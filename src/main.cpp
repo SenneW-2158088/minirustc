@@ -2,6 +2,8 @@
 #include "parser/parser.h"
 #include "driver/Driver.h"
 
+#include <cstdio>
+
 int main(int argc, char* argv[]) {
 
     // read options

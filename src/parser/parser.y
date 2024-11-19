@@ -42,7 +42,6 @@
 
 %code {
     #define yylex scanner->yylex
-    using Tok = MRC::Token;
 }
 
 %define api.namespace { MRC }
