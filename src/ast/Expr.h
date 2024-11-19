@@ -11,17 +11,31 @@ struct Expr; // Forward declare
 
 struct LiteralExpr {
   U<Lit> lit;
+
+public:
+  LiteralExpr() = default;
+  explicit LiteralExpr(U<Lit> lit) : lit(std::move(lit)) {}
 };
 
 struct ExprExpr {
-  U<Expr> lit;
+  U<Expr> expr;
+
+public:
+  ExprExpr() = default;
+  explicit ExprExpr(U<Expr> expr) : expr(std::move(expr)) {}
 };
 
 struct Expr {
-  std::variant<LiteralExpr, ExprExpr> kind{};
+  using ExprKind = std::variant<LiteralExpr, ExprExpr>;
+  ExprKind kind;
 
 public:
-  Expr() = default;
+  Expr() : kind() {}
+
+  explicit Expr(ExprKind kind) : kind(std::move(kind)) {}
+
+  static Expr makeLit(U<Lit> lit) { return Expr(LiteralExpr(std::move(lit))); }
+  static Expr makeExpr(U<Expr> expr) { return Expr(ExprExpr(std::move(expr))); }
 };
 
 } // namespace MRC::AST

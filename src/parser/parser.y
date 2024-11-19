@@ -60,14 +60,17 @@
 /* Token Definitions */
 // Integers
 %token <MRC::Token> INTEGER_LITERAL
+%token <MRC::Token> BOOLEAN_LITERAL
+%token <MRC::Token> FLOAT_LITERAL
+%token <MRC::Token> STR_LITERAL
 
 // Misc
-%token TEST 1
-%token EOF  0
+%token ERROR    1
+%token EOF      0
 
 %type <std::string>  statement
 %type <std::string>  expression
-%type <std::string>   literal
+%type <MRC::AST::Lit>   literal
 
 %%
 program
@@ -89,12 +92,15 @@ statement
 expression
     : literal                   {
         // std::cout << "Parsing literal" << std::endl;
-        $$ = $1;
+        $$ = "Expr";
+        // std::cout << $1 << std::endl;
     }
     ;
 
 literal
-    : INTEGER_LITERAL           { $$ = "hlello"; std::cout << $1 << std::endl;}
+    : INTEGER_LITERAL           { $$ = MRC::AST::Lit::makeInteger($1); std::cout << $1 << std::endl;}
+    | FLOAT_LITERAL             { $$ = MRC::AST::Lit::makeFloat($1); std::cout << $1 << std::endl;}
+    | STR_LITERAL            { $$ = MRC::AST::Lit::makeStr($1); std::cout << $1 << std::endl;}
     ;
 
 %%

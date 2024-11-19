@@ -14,9 +14,13 @@ struct ExprStmt {
 };
 
 struct Stmt {
-  std::variant<ExprStmt> kind{};
+  using StmtKind = std::variant<ExprStmt>;
+  StmtKind kind{};
 
 public:
   Stmt() = default;
+  explicit Stmt(StmtKind kind) : kind(std::move(kind)) {}
+
+  static Stmt makeExpr(U<Expr> expr) { return Stmt(ExprStmt(std::move(expr))); }
 };
 } // namespace MRC::AST
