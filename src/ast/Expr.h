@@ -8,6 +8,7 @@
 
 namespace MRC::AST {
 
+struct Pat;  // Forward declare
 struct Expr; // Forward declare
 
 /* Literal expression */
@@ -50,7 +51,9 @@ public:
 
   static Expr makeLit(U<Lit> lit) { return Expr(LiteralExpr(std::move(lit))); }
   static Expr makeExpr(U<Expr> expr) { return Expr(ExprExpr(std::move(expr))); }
-  static Expr makeLet (U<Pat> pattern, U<Expr> expr) { return Expr(LetExpr(std::move(pattern), std::move(expr))); }
+  static Expr makeLet(U<Pat> pattern, U<Expr> expr) {
+    return Expr(LetExpr(std::move(pattern), std::move(expr)));
+  }
 };
 
 } // namespace MRC::AST

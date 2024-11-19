@@ -4,6 +4,9 @@
 
 #include "Block.h"
 #include "ast/Expr.h"
+#include "ast/Type.h"
+#include "ast/struct/Pat.h"
+#include "util/util.h"
 
 namespace MRC::AST {
 struct DeclLocal {};
@@ -19,7 +22,9 @@ struct InitElseLocal {
 
 struct Local {
   using LocalKind = std::variant<DeclLocal, InitLocal, InitElseLocal>;
+  U<Pat> pat;
   LocalKind kind;
+  Opt<U<Type>> type;
 
 public:
   Local() = default;

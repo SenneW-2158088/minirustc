@@ -8,9 +8,9 @@ int main(int argc, char* argv[]) {
 
     // read options
     MRC::Driver driver{};
-    driver.parse("123");
-    driver.parse("0.");
-    driver.parse("0.29");
-    driver.parse(".0"); // should not work
+    driver.parse("let a;");
+    driver.parse("let a = 30;");
+    driver.parse("let a: i32;");
+    driver.parse("let a: i32 = 32;");
     return 0;
 }
