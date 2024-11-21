@@ -30,6 +30,8 @@
     #include "parser/parser.h"
     #include "lexer/Token.h"
     #include "ast/struct/Path.h"
+
+    using namespace MRC::AST;
 }
 
 
@@ -92,7 +94,7 @@
 /* Defining Types */
 
 // Statements
-%type <MRC::Symbol>                 statement
+%type <MRC::AST::Stmt>              statement
 %type <MRC::AST::LetStmt>           let_statement
 
 // Expressions
@@ -100,8 +102,8 @@
 %type <U<MRC::AST::Lit>>            literal_expr
 
 // Patterns
-%type <MRC::Symbol>                 pattern
-%type <MRC::Symbol>                 identifier_pattern
+%type <MRC::AST::Pat>               pattern
+%type <MRC::AST::Pat>               identifier_pattern
 
 // Path
 %type <MRC::AST::Path>              type_annotation
@@ -109,14 +111,15 @@
 %type <MRC::Symbol>                 path_segment
 
 %%
+
 program
-    : statement program                                         { std::cout << "program:" << std::endl; }
-    | EOF                                                       { std::cout << "EOF" << std::endl; }
+    : statement program     { ast->insert(std::move($1)); }
+    | EOF                   { }
     ;
 
 /* Statements */
 statement
-    : let_statement                                             { std::cout << "let statment:" << std::endl; }
+    : let_statement { $$ = Stmt(std::move($1)); }
     ;
 
 let_statement
@@ -127,11 +130,14 @@ let_statement
     ;
 
 pattern
-    : identifier_pattern
+    : identifier_pattern        { $$ = std::move($1); }
     ;
 
 identifier_pattern
-    : IDENTIFIER        { std::cout << "IDENTIFIER" << $1 << std::endl; }
+    : IDENTIFIER        {
+        std::cout << "IDENTIFIER" << $1 << std::endl;
+        $$ = MRC::AST::Pat::makeIdent(BindingMode::make(), Ident($1.symbol), std::nullopt);
+    }
     | MUT IDENTIFIER    { std::cout << "MUT IDENTIFIER" << std::endl; }
     ;
 type_annotation
@@ -162,11 +168,9 @@ expr
     ;
 
 literal_expr
-    : INTEGER_LITERAL           {
-        $$ = MU<MRC::AST::Lit>(std::move(MRC::AST::Lit::makeInteger($1)));
-    }
-    | FLOAT_LITERAL             { }
-    | STR_LITERAL               { }
+    : INTEGER_LITERAL           { $$ = MU<MRC::AST::Lit>(MRC::AST::Lit::makeInteger($1)); }
+    | FLOAT_LITERAL             { $$ = MU<MRC::AST::Lit>(MRC::AST::Lit::makeFloat($1)); }
+    | STR_LITERAL               { $$ = MU<MRC::AST::Lit>(MRC::AST::Lit::makeStr($1)); }
     ;
 
 %%

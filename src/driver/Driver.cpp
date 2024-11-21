@@ -4,7 +4,8 @@
 #include <istream>
 #include <string>
 
-MRC::Driver::Driver() : _ast(), _scanner(*this), _parser(this, &_scanner, _ast.get()) {}
+MRC::Driver::Driver()
+    : _ast(), _scanner(*this), _parser(this, &_scanner, _ast.get()) {}
 
 bool MRC::Driver::parse(const std::string &input) {
   std::istringstream stream{input};

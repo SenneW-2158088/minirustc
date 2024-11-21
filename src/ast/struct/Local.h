@@ -2,13 +2,13 @@
 
 #include <variant>
 
-#include "Block.h"
 #include "ast/Expr.h"
 #include "ast/Type.h"
 #include "ast/struct/Pat.h"
 #include "util/util.h"
 
 namespace MRC::AST {
+struct Block;
 struct DeclLocal {};
 
 struct InitLocal {
@@ -32,7 +32,11 @@ public:
   explicit Local(LocalKind kind) : kind(std::move(kind)) {}
 
   static Local makeDecl() { return Local(DeclLocal()); }
-  static Local makeInit(U<Expr> expr) { return Local(InitLocal(std::move(expr))); }
-  static Local makeInitElse(U<Expr> expr, U<Block> block) { return Local(InitElseLocal(std::move(expr), std::move(block))); }
+  static Local makeInit(U<Expr> expr) {
+    return Local(InitLocal(std::move(expr)));
+  }
+  static Local makeInitElse(U<Expr> expr, U<Block> block) {
+    return Local(InitElseLocal(std::move(expr), std::move(block)));
+  }
 };
-} // namespace MRC::AST::STRUCT
+} // namespace MRC::AST

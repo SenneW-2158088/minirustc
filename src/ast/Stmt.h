@@ -38,7 +38,7 @@ struct Stmt {
 
 public:
   Stmt() = default;
-  explicit Stmt(StmtKind kind) : kind(std::move(kind)) {}
+  Stmt(StmtKind kind) : kind(std::move(kind)) {}
 
   static Stmt makeEmpty() { return Stmt(EmptyStmt()); }
   static Stmt makeExpr(U<Expr> expr) { return Stmt(ExprStmt(std::move(expr))); }

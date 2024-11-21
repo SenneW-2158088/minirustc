@@ -12,12 +12,12 @@ struct Pat;  // Forward declare
 struct Expr; // Forward declare
 
 /* Literal expression */
-struct LiteralExpr {
+struct LitExpr {
   U<Lit> lit;
 
 public:
-  LiteralExpr() = default;
-  explicit LiteralExpr(U<Lit> lit) : lit(std::move(lit)) {}
+  LitExpr() = default;
+  explicit LitExpr(U<Lit> lit) : lit(std::move(lit)) {}
 };
 
 /* Expression expression */
@@ -41,7 +41,7 @@ public:
 };
 
 struct Expr {
-  using ExprKind = std::variant<LiteralExpr, ExprExpr, LetExpr>;
+  using ExprKind = std::variant<LitExpr, ExprExpr, LetExpr>;
   ExprKind kind;
 
 public:
@@ -49,7 +49,7 @@ public:
 
   explicit Expr(ExprKind kind) : kind(std::move(kind)) {}
 
-  static Expr makeLit(U<Lit> lit) { return Expr(LiteralExpr(std::move(lit))); }
+  static Expr makeLit(U<Lit> lit) { return Expr(LitExpr(std::move(lit))); }
   static Expr makeExpr(U<Expr> expr) { return Expr(ExprExpr(std::move(expr))); }
   static Expr makeLet(U<Pat> pattern, U<Expr> expr) {
     return Expr(LetExpr(std::move(pattern), std::move(expr)));
