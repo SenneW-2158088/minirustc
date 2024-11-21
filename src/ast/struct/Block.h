@@ -4,9 +4,11 @@
 #include <vector>
 
 namespace MRC::AST {
+struct Stmt;
 struct Block {
   using Statements = std::vector<Stmt>;
   Statements statements;
+
 public:
   Block() = default;
   explicit Block(Statements statements) : statements(std::move(statements)) {}

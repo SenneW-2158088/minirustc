@@ -4,6 +4,7 @@
 
 #include "ast/Expr.h"
 #include "ast/Type.h"
+#include "ast/struct/Block.h"
 #include "ast/struct/Pat.h"
 #include "util/util.h"
 

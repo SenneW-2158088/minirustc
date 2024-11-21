@@ -19,6 +19,12 @@
         struct Expr;
         struct Stmt;
         struct Lit;
+        struct Block;
+        struct Ident;
+        struct Local;
+        struct Pat;
+        struct Path;
+        struct Type;
     }
 }
 
@@ -29,7 +35,11 @@
     #include "lexer/Scanner.h"
     #include "parser/parser.h"
     #include "lexer/Token.h"
+
     #include "ast/struct/Path.h"
+    #include "ast/struct/Block.h"
+    #include "ast/struct/Pat.h"
+    #include "ast/struct/Local.h"
 
     using namespace MRC::AST;
 }

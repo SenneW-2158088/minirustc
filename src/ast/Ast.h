@@ -12,6 +12,9 @@ namespace MRC::AST {
 using StmtPtr = U<Stmt>;
 using ExprPtr = U<Expr>;
 
+struct Stmt;
+struct Expr;
+
 typedef int Index;
 
 class Ast {

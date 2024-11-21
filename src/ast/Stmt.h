@@ -3,12 +3,14 @@
 #include "ast/Expr.h"
 #include "ast/struct/Local.h"
 #include "util/util.h"
-
 #include <variant>
 
 namespace MRC::AST {
 
 struct Stmt;
+struct Local;
+struct Block;
+struct Expr;
 
 struct ExprStmt {
   U<Expr> expr;
