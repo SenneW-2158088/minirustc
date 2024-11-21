@@ -123,20 +123,56 @@
 %%
 
 program
-    : statement program     { ast->insert(std::move($1)); }
+    : statement program     { ast->insert(std::move($1));
+    }
     | EOF                   { }
     ;
 
 /* Statements */
 statement
-    : let_statement { $$ = Stmt(std::move($1)); }
+    : let_statement {
+        $$ = Stmt(std::move($1));
+    }
     ;
 
 let_statement
-    : LET pattern SEMI                                       { std::cout << "LET_SEMI:" << std::endl; }
-    | LET pattern EQ literal_expr SEMI                       { std::cout << "LET_EQ:" << std::endl; }
-    | LET pattern COLON type_annotation SEMI                 { std::cout << "LET_SEMI:" << std::endl; }
-    | LET pattern COLON type_annotation EQ literal_expr SEMI { std::cout << "LET_SEMI:" << std::endl; }
+    : LET pattern SEMI {
+        Local local = Local::makeDecl();
+        local.pat = std::make_unique<Pat>(std::move($2));
+        local.type = std::nullopt;
+        auto u_local = std::make_unique<Local>(std::move(local));
+        $$ = LetStmt(std::move(u_local));
+    }
+    | LET pattern EQ literal_expr SEMI {
+        auto u_expr = std::make_unique<Expr>(Expr::makeLit(std::move($4)));
+        Local local = Local::makeInit(std::move(u_expr));
+        local.pat = std::make_unique<Pat>(std::move($2));
+        local.type = std::nullopt;
+        auto u_local = std::make_unique<Local>(std::move(local));
+        $$ = LetStmt(std::move(u_local));
+    }
+    | LET pattern COLON type_annotation SEMI {
+        Local local = Local::makeDecl();
+        local.pat = std::make_unique<Pat>(std::move($2));
+
+        auto u_path = std::make_unique<Path>($4);
+        auto o_type = Type::makePath(std::move(u_path));
+        local.type = std::make_unique<Type>(std::move(o_type));
+        auto u_local = std::make_unique<Local>(std::move(local));
+        $$ = LetStmt(std::move(u_local));
+    }
+    | LET pattern COLON type_annotation EQ literal_expr SEMI {
+        auto u_expr = std::make_unique<Expr>(Expr::makeLit(std::move($6)));
+        Local local = Local::makeInit(std::move(u_expr));
+        local.pat = std::make_unique<Pat>(std::move($2));
+
+        auto u_path = std::make_unique<Path>($4);
+        auto o_type = Type::makePath(std::move(u_path));
+        local.type = std::make_unique<Type>(std::move(o_type));
+
+        auto u_local = std::make_unique<Local>(std::move(local));
+        $$ = LetStmt(std::move(u_local));
+    }
     ;
 
 pattern
@@ -145,10 +181,9 @@ pattern
 
 identifier_pattern
     : IDENTIFIER        {
-        std::cout << "IDENTIFIER" << $1 << std::endl;
         $$ = MRC::AST::Pat::makeIdent(BindingMode::make(), Ident($1.symbol), std::nullopt);
     }
-    | MUT IDENTIFIER    { std::cout << "MUT IDENTIFIER" << std::endl; }
+    | MUT IDENTIFIER    { }
     ;
 type_annotation
     : type_path { $$ = MRC::AST::Path($1); }

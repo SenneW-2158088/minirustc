@@ -1,28 +1,33 @@
 #pragma once
-
-#include "ast/Expr.h"
-#include "ast/Ident.h"
-#include "ast/Lit.h"
-#include "ast/Stmt.h"
-#include "ast/Type.h"
-#include "ast/struct/Block.h"
-#include "ast/struct/Local.h"
-#include "ast/visitor/Walker.h"
+#include "ast/prelude.h"
 
 namespace MRC::AST {
+// Forward declare the visitor class first
+struct Visitor;
+
+// Forward declare all walk functions
+void walk_stmt(Visitor *visitor, Stmt &stmt);
+void walk_expr(Visitor *visitor, Expr &expr);
+void walk_lit(Visitor *visitor, Lit &lit);
+void walk_ident(Visitor *visitor, Ident &ident);
+void walk_type(Visitor *visitor, Type &type);
+void walk_block(Visitor *visitor, Block &block);
+void walk_local(Visitor *visitor, Local &local);
+void walk_pat(Visitor *visitor, Pat &pat);
+void walk_path(Visitor *visitor, Path &path);
+
+// Then define the visitor struct
 struct Visitor {
 public:
   // Root types
-  virtual void visit_stmt(Stmt &stmt) { walk_stmt(this, stmt); }
-  virtual void visit_expr(Expr &expr) { walk_expr(this, expr); }
-
-  virtual void visit_lit(Lit &lit) { walk_lit(this, lit); }
-  virtual void visit_ident(Ident &ident) { walk_ident(this, ident); }
-  virtual void visit_type(Type &type) { walk_type(this, type); }
-
-  virtual void visit_block(Block &block) { walk_block(this, block); }
-  virtual void visit_local(Local &local) { walk_local(this, local); }
-  virtual void visit_pat(Pat &pat) { walk_pat(this, pat); }
-  virtual void visit_path(Path &path) { walk_path(this, path); }
+  virtual void visit_stmt(Stmt &stmt);
+  virtual void visit_expr(Expr &expr);
+  virtual void visit_lit(Lit &lit);
+  virtual void visit_ident(Ident &ident);
+  virtual void visit_type(Type &type);
+  virtual void visit_block(Block &block);
+  virtual void visit_local(Local &local);
+  virtual void visit_pat(Pat &pat);
+  virtual void visit_path(Path &path);
 };
 } // namespace MRC::AST

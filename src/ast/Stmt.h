@@ -1,15 +1,12 @@
 #pragma once
 
-#include "ast/Expr.h"
-#include "ast/struct/Local.h"
+#include "ast/prelude.h"
+
 #include "util/util.h"
-#include <variant>
 
 namespace MRC::AST {
-
-struct Stmt;
+struct Pat;
 struct Local;
-struct Block;
 struct Expr;
 
 struct ExprStmt {

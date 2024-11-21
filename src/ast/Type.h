@@ -1,8 +1,8 @@
 #pragma once
 
-#include "ast/struct/Path.h"
 #include "util/util.h"
-#include <variant>
+#include "ast/prelude.h"
+
 namespace MRC::AST {
 
 struct InferType{};

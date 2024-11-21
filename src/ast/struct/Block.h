@@ -1,10 +1,10 @@
 #pragma once
 
-#include "ast/Stmt.h"
+#include "ast/prelude.h"
+
 #include <vector>
 
 namespace MRC::AST {
-struct Stmt;
 struct Block {
   using Statements = std::vector<Stmt>;
   Statements statements;

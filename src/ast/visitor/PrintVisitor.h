@@ -1,7 +1,9 @@
 #pragma once
-#include "ast/visitor/Walker.h"
+
 #include <iostream>
 #include <string>
+
+#include "ast/visitor/Visitor.h"
 
 namespace MRC::AST {
 struct PrintVisitor : Visitor {
@@ -46,7 +48,7 @@ public:
 
   void visit_lit(Lit& lit) override {
     print_indent();
-    std::cout << "Lit {\n";
+    std::cout << "Lit {\n" << lit.symbol;
     {
       ScopeGuard guard(indent_level);
       Visitor::visit_lit(lit);

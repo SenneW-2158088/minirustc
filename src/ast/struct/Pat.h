@@ -1,17 +1,9 @@
 #pragma once
 
-// Structure for representing patterns
-#include "ast/Expr.h"
-#include "ast/Ident.h"
-#include "ast/Lit.h"
-#include "ast/struct/BindingMode.h"
-#include <optional>
-#include <variant>
+
+#include "ast/prelude.h"
 
 namespace MRC::AST {
-
-struct Expr; // Forward declare
-struct Pat;  // Forward declare
 
 struct IdentPat {
   BindingMode binding;

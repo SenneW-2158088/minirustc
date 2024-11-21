@@ -1,30 +1,33 @@
 #pragma once
 
+#include <variant>
 #include <vector>
 
-#include "Expr.h"
-#include "Stmt.h"
-#include "Lit.h"
-#include "util/util.h"
+#include "ast/prelude.h"
 
 namespace MRC::AST {
 
 using StmtPtr = U<Stmt>;
 using ExprPtr = U<Expr>;
 
-struct Stmt;
-struct Expr;
-
 typedef int Index;
 
-class Ast {
+struct Ast {
   std::vector<Stmt> statements{};
   std::vector<Expr> expressions{};
 
 public:
   Ast() = default;
-  Index insert(Stmt stmt) { statements.push_back(std::move(stmt)); return statements.size() - 1; }
-  Index insert(Expr expr) { expressions.push_back(std::move(expr)); return expressions.size() - 1; }
+  Index insert(Stmt stmt) {
+    std::cout << "Add stmt" << std::endl;
+    statements.push_back(std::move(stmt));
+    return statements.size() - 1;
+  }
+  Index insert(Expr expr) {
+    std::cout << "Add expr" << std::endl;
+    expressions.push_back(std::move(expr));
+    return expressions.size() - 1;
+  }
 };
 
 } // namespace MRC::AST

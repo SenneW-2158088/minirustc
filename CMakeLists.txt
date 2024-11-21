@@ -52,7 +52,17 @@ set(AST
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ast/AST.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ast/Expr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ast/Stmt.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ast/Ident.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ast/Lit.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ast/Type.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ast/struct/BindingMode.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ast/struct/Block.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ast/struct/Pat.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ast/struct/Path.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ast/struct/Local.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ast/visitor/Visitor.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ast/visitor/Visitor.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ast/visitor/PrintVisitor.h
 )
 
 # Main executable

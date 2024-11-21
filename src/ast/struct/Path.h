@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Token.h"
+#include "lexer/Token.h"
+
 namespace MRC::AST {
   struct Path {
     using PathSegments = std::vector<Symbol>;

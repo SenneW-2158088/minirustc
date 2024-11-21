@@ -1,7 +1,6 @@
 #pragma once
 
-#include "ast/Lit.h"
-#include "struct/Pat.h"
+#include "ast/prelude.h"
 #include "util/util.h"
 
 #include <variant>
