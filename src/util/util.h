@@ -6,8 +6,8 @@
 template <typename T> using U = std::unique_ptr<T>;
 template <typename T> using P = std::shared_ptr<T>;
 template <typename T> using Opt = std::optional<T>;
-template<typename T>
 
+template<typename T>
 constexpr T&& Move(T&& t) noexcept {
     return std::move(t);
 }
@@ -17,6 +17,7 @@ auto MU(Args&&... args) {
    return std::make_unique<T>(std::forward<Args>(args)...);
 }
 
+// https://en.cppreference.com/w/cpp/utility/variant/visit
 template<class... Ts>
 struct overloaded : Ts... { using Ts::operator()...; };
 // explicit deduction guide (not needed as of C++20)
