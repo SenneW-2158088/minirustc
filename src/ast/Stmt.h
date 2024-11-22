@@ -27,12 +27,23 @@ public:
 
 struct EmptyStmt {};
 
-// To be supported
-// Item(P<Item>),
-// Semi(P<Expr>),
+struct ItemStmt {
+  U<Item> item;
+  ItemStmt() = default;
+  explicit ItemStmt(U<Item> item) : item(std::move(item)) {}
+};
+
+struct SemiStmt {
+  U<Expr> expr;
+
+public:
+  SemiStmt() = default;
+  explicit SemiStmt(U<Expr> expr) : expr(std::move(expr)) {}
+};
 
 struct Stmt {
-  using StmtKind = std::variant<ExprStmt, LetStmt, EmptyStmt>;
+  using StmtKind =
+      std::variant<ExprStmt, LetStmt, EmptyStmt, ItemStmt, SemiStmt>;
   StmtKind kind{};
 
 public:
@@ -44,5 +55,8 @@ public:
   static Stmt makeLet(U<Local> local) {
     return Stmt(LetStmt(std::move(local)));
   }
+  static Stmt makeItem(U<Item> item) { return Stmt(ItemStmt(std::move(item))); }
+
+  static Stmt makeSemi(U<Expr> expr) { return Stmt(SemiStmt(std::move(expr))); }
 };
 } // namespace MRC::AST

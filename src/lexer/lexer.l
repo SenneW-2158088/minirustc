@@ -85,6 +85,13 @@ FLOAT_SUFFIX    (f32|f64)
 "->"        { return MRC::Token(yytext, "", Token::TOKEN_RIGHT_ARROW, m_driver.location); }
 "<-"        { return MRC::Token(yytext, "", Token::TOKEN_LEFT_ARROW, m_driver.location); }
 
+"("        { return MRC::Token(yytext, "", Token::TOKEN_LPAREN, m_driver.location); }
+")"        { return MRC::Token(yytext, "", Token::TOKEN_RPAREN, m_driver.location); }
+"{"        { return MRC::Token(yytext, "", Token::TOKEN_LBRACKET, m_driver.location); }
+"}"        { return MRC::Token(yytext, "", Token::TOKEN_RBRACKET, m_driver.location); }
+"["        { return MRC::Token(yytext, "", Token::TOKEN_LBRACE, m_driver.location); }
+"]"        { return MRC::Token(yytext, "", Token::TOKEN_RBRACE, m_driver.location); }
+
 "break"     { return MRC::Token(yytext, "", Token::TOKEN_BREAK, m_driver.location); }
 "continue"  { return MRC::Token(yytext, "", Token::TOKEN_CONTINUE, m_driver.location); }
 "return"    { return MRC::Token(yytext, "", Token::TOKEN_RETURN, m_driver.location); }
@@ -102,27 +109,22 @@ FLOAT_SUFFIX    (f32|f64)
 "::"     { return MRC::Token(yytext, "", Token::TOKEN_SCOPE_RESOLUTION, m_driver.location); }
 
 {IDENTIFIER} {
-    std::cout << "Got identifier: " << yytext << std::endl;
     return MRC::Token(yytext, "", Token::TOKEN_IDENTIFIER, m_driver.location);
 }
 
 {INT_SUFFIX}|{FLOAT_SUFFIX} {
-    std::cout << "Got primitive type" << yytext << std::endl;
     return MRC::Token(yytext, "", Token::TOKEN_TYPE, m_driver.location);
 }
 
 {INTEGER} {
-    // std::cout << "got integer: " << yytext << std::endl;
     return MRC::Token(yytext, "", Token::TOKEN_INTEGER_LITERAL, m_driver.location);
 }
 
 {FLOAT} {
-    // std::cout << "got float: " << yytext << std::endl;
     return MRC::Token(yytext, "", Token::TOKEN_FLOAT_LITERAL, m_driver.location);
 }
 
 {STRING} {
-    // std::cout << "got string: " << yytext << std::endl;
     symbol = yytext;
     return MRC::Token(yytext, "", Token::TOKEN_STR_LITERAL, m_driver.location);
 }

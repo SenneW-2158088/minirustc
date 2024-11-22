@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <string>
+#include <variant>
 
 #include "ast/visitor/Visitor.h"
 
@@ -18,13 +19,13 @@ private:
   }
 
   struct ScopeGuard {
-    int& level;
-    ScopeGuard(int& l) : level(l) { level++; }
+    int &level;
+    ScopeGuard(int &l) : level(l) { level++; }
     ~ScopeGuard() { level--; }
   };
 
 public:
-  void visit_stmt(Stmt& stmt) override {
+  void visit_stmt(Stmt &stmt) override {
     print_indent();
     std::cout << "Stmt {\n";
     {
@@ -35,7 +36,7 @@ public:
     std::cout << "}\n";
   }
 
-  void visit_expr(Expr& expr) override {
+  void visit_expr(Expr &expr) override {
     print_indent();
     std::cout << "Expr {\n";
     {
@@ -46,9 +47,9 @@ public:
     std::cout << "}\n";
   }
 
-  void visit_lit(Lit& lit) override {
+  void visit_lit(Lit &lit) override {
     print_indent();
-    std::cout << "Lit {\n" << lit.symbol;
+    std::cout << "Lit {\n";
     {
       ScopeGuard guard(indent_level);
       Visitor::visit_lit(lit);
@@ -57,7 +58,7 @@ public:
     std::cout << "}\n";
   }
 
-  void visit_ident(Ident& ident) override {
+  void visit_ident(Ident &ident) override {
     print_indent();
     std::cout << "Ident {\n";
     {
@@ -68,7 +69,7 @@ public:
     std::cout << "}\n";
   }
 
-  void visit_type(Type& type) override {
+  void visit_type(Type &type) override {
     print_indent();
     std::cout << "Type {\n";
     {
@@ -79,7 +80,7 @@ public:
     std::cout << "}\n";
   }
 
-  void visit_block(Block& block) override {
+  void visit_block(Block &block) override {
     print_indent();
     std::cout << "Block {\n";
     {
@@ -90,7 +91,7 @@ public:
     std::cout << "}\n";
   }
 
-  void visit_local(Local& local) override {
+  void visit_local(Local &local) override {
     print_indent();
     std::cout << "Local {\n";
     {
@@ -101,7 +102,7 @@ public:
     std::cout << "}\n";
   }
 
-  void visit_pat(Pat& pat) override {
+  void visit_pat(Pat &pat) override {
     print_indent();
     std::cout << "Pat {\n";
     {
@@ -112,7 +113,7 @@ public:
     std::cout << "}\n";
   }
 
-  void visit_path(Path& path) override {
+  void visit_path(Path &path) override {
     print_indent();
     std::cout << "Path {\n";
     {

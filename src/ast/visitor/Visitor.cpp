@@ -7,7 +7,10 @@ void walk_stmt(Visitor *visitor, Stmt &stmt) {
   std::visit(
       overloaded{[&visitor](ExprStmt &val) { visitor->visit_expr(*val.expr); },
                  [&visitor](LetStmt &val) { visitor->visit_local(*val.local); },
-                 [&visitor](EmptyStmt &val) { return; }},
+                 [&visitor](EmptyStmt &val) { return; },
+                 [&visitor](auto &val) { /* TODO */
+                                         return;
+                 }},
       stmt.kind);
 }
 
@@ -18,7 +21,8 @@ void walk_expr(Visitor *visitor, Expr &expr) {
                  [&visitor](LetExpr &val) {
                    visitor->visit_expr(*val.expr);
                    visitor->visit_pat(*val.pattern);
-                 }},
+                 },
+                 [&visitor](auto &val) { /* TODO */ }},
       expr.kind);
 }
 
@@ -46,7 +50,7 @@ void walk_block(Visitor *visitor, Block &block) {
 
 void walk_local(Visitor *visitor, Local &local) {
   std::visit(
-    overloaded{[visitor](InitLocal &val) { visitor->visit_expr(*val.expr); },
+      overloaded{[visitor](InitLocal &val) { visitor->visit_expr(*val.expr); },
                  [visitor](InitElseLocal &val) {
                    visitor->visit_expr(*val.expr);
                    visitor->visit_block(*val.block);
@@ -54,7 +58,7 @@ void walk_local(Visitor *visitor, Local &local) {
                  [](auto &val) { /* do nothing */ }},
       local.kind);
   visitor->visit_pat(*local.pat);
-  if(local.type.has_value()){
+  if (local.type.has_value()) {
     visitor->visit_type(*local.type.value());
   }
 }

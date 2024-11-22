@@ -39,8 +39,40 @@ public:
       : pattern(std::move(pattern)), expr(std::move(expr)) {}
 };
 
+struct BlockExpr {
+  U<Block> block;
+  BlockExpr() = default;
+  BlockExpr(U<Block> block) : block(std::move(block)) {}
+};
+
+struct IfExpr {
+  using ElseExpr = std::optional<U<Expr>>;
+  U<Expr> expr;
+  U<Block> block;
+  ElseExpr elseExpr;
+  IfExpr() = default;
+  IfExpr(U<Expr> expr, U<Block> block, ElseExpr elseExpr)
+      : expr(std::move(expr)), block(std::move(block)),
+        elseExpr(std::move(elseExpr)) {}
+};
+
+struct LoopExpr {
+  U<Block> block;
+  LoopExpr() = default;
+  LoopExpr(U<Block> block) : block(std::move(block)) {}
+};
+
+struct WhileExpr {
+  U<Expr> expr;
+  U<Block> block;
+  WhileExpr() = default;
+  WhileExpr(U<Expr> expr, U<Block> block)
+      : expr(std::move(expr)), block(std::move(block)) {}
+};
+
 struct Expr {
-  using ExprKind = std::variant<LitExpr, ExprExpr, LetExpr>;
+  using ExprKind = std::variant<LitExpr, ExprExpr, LetExpr, BlockExpr,
+                                WhileExpr, IfExpr, LoopExpr>;
   ExprKind kind;
 
 public:
@@ -52,6 +84,27 @@ public:
   static Expr makeExpr(U<Expr> expr) { return Expr(ExprExpr(std::move(expr))); }
   static Expr makeLet(U<Pat> pattern, U<Expr> expr) {
     return Expr(LetExpr(std::move(pattern), std::move(expr)));
+  }
+  static Expr makeIf(U<Expr> condition, U<Block> thenBlock) {
+    return Expr(
+        IfExpr(std::move(condition), std::move(thenBlock), std::nullopt));
+  }
+
+  static Expr makeIfElse(U<Expr> condition, U<Block> thenBlock,
+                         U<Expr> elseExpr) {
+    return Expr(IfExpr(std::move(condition), std::move(thenBlock),
+                       std::move(elseExpr)));
+  }
+
+  static Expr makeLoop(U<Block> block) {
+    return Expr(LoopExpr(std::move(block)));
+  }
+
+  static Expr makeWhile(U<Expr> condition, U<Block> block) {
+    return Expr(WhileExpr(std::move(condition), std::move(block)));
+  }
+  static Expr makeBlock(U<Block> block) {
+    return Expr(BlockExpr(std::move(block)));
   }
 };
 
