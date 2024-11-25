@@ -26,14 +26,14 @@ struct Local {
 public:
   Local() = default;
 
-  explicit Local(LocalKind kind) : kind(std::move(kind)) {}
+  explicit Local(U<Pat> pat, Opt<U<Type>> type, LocalKind kind) : kind(std::move(kind)) {}
 
-  static Local makeDecl() { return Local(DeclLocal()); }
-  static Local makeInit(U<Expr> expr) {
-    return Local(InitLocal(std::move(expr)));
+  static Local makeDecl(U<Pat> pat, Opt<U<Type>> type) { return Local(std::move(pat), std::move(type), DeclLocal()); }
+  static Local makeInit(U<Pat> pat, Opt<U<Type>> type, U<Expr> expr) {
+    return Local(std::move(pat), std::move(type), InitLocal(std::move(expr)));
   }
-  static Local makeInitElse(U<Expr> expr, U<Block> block) {
-    return Local(InitElseLocal(std::move(expr), std::move(block)));
+  static Local makeInitElse(U<Pat> pat, Opt<U<Type>> type, U<Expr> expr, U<Block> block) {
+    return Local(std::move(pat), std::move(type), InitElseLocal(std::move(expr), std::move(block)));
   }
 };
 } // namespace MRC::AST

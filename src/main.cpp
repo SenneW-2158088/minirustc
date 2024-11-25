@@ -16,21 +16,27 @@ int main(int argc, char* argv[]) {
 
     // read options
     MRC::Driver driver{};
-
+    driver.parse("let a = 30;");
+    driver.parse("let a = 30u16;");
+    driver.parse("let a = 30_u16;");
+    driver.parse("let a = 30_u16;");
     driver.parse("fn main();");
     driver.parse("fn main(hello: i32);");
     driver.parse("fn main() -> i32;");
     auto method = R"(
     fn main() -> i32 {
       let a = 30;
+      fn a() {
+        let b = 20;
+      }
     }
     )";
     driver.parse(method);
+    driver.parse("let a;");
+    driver.parse("let a = 30;");
+    driver.parse("let a: i32;");
+    driver.parse("let a: i32 = 32;");
     std::cout << "pass" << std::endl;
-    // driver.parse("let a;");
-    // driver.parse("let a = 30;");
-    // driver.parse("let a: i32;");
-    // driver.parse("let a: i32 = 32;");
     printAst(driver.ast());
 
     return 0;

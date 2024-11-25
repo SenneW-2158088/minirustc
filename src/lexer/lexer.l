@@ -112,12 +112,12 @@ FLOAT_SUFFIX    (f32|f64)
     return MRC::Token(yytext, "", Token::TOKEN_IDENTIFIER, m_driver.location);
 }
 
-{INT_SUFFIX}|{FLOAT_SUFFIX} {
-    return MRC::Token(yytext, "", Token::TOKEN_TYPE, m_driver.location);
+{DEC_LIT}(_)*({INT_SUFFIX}|{FLOAT_SUFFIX}) {
+    return MRC::Token(yytext, "", Token::TOKEN_INTEGER_LITERAL, m_driver.location);
 }
 
-{INTEGER} {
-    return MRC::Token(yytext, "", Token::TOKEN_INTEGER_LITERAL, m_driver.location);
+^({INT_SUFFIX}|{FLOAT_SUFFIX})$ {
+    return MRC::Token(yytext, "", Token::TOKEN_TYPE, m_driver.location);
 }
 
 {FLOAT} {

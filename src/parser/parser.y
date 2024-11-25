@@ -84,145 +84,138 @@
 %token ERROR    1
 %token EOF      0
 
-/* Defining Types */
+/* -- Statements -- */
+%type <AST::Stmt>                   statement
+%type <AST::Block::Statements>      statements
 
-// Statements
-%type <MRC::AST::Stmt>              statement
-%type <MRC::AST::Block::Statements> statements
-%type <MRC::AST::LetStmt>           let_statement
+/* -- Expressions -- */
+%type <U<AST::Expr>>                expr
+%type <U<AST::Expr>>                expr_without_block
+%type <U<AST::Expr>>                expr_with_block
 
-// Expressions
-%type <MRC::AST::Expr>              expr
-%type <MRC::AST::Expr>              expr_without_block
-%type <MRC::AST::Expr>              expr_with_block
+%type <U<AST::Lit>>                 literal_expr
+%type <U<AST::Block>>               block_expr
 
-%type <U<MRC::AST::Lit>>            literal_expr
-%type <MRC::AST::Block>             block_expr
+/* -- Identifier -- */
+%type <AST::Ident>                  identifier
 
-// Identifier
-%type <MRC::AST::Ident>             identifier
+/* -- Patterns -- */
+%type <U<AST::Pat>>                 pattern
+%type <U<AST::Pat>>                 identifier_pattern
 
-// Patterns
-%type <MRC::AST::Pat>               pattern
-%type <MRC::AST::Pat>               identifier_pattern
+/* -- Types -- */
+%type <U<AST::Type>>                type
+%type <Opt<U<AST::Type>>>           type.opt
+%type <Opt<U<AST::Type>>>           typedecl.opt
 
-// Types
-%type <MRC::AST::Type>              type
-%type <MRC::AST::Path>              type_annotation
-%type <std::vector<MRC::Symbol>>    type_path
-%type <MRC::Symbol>                 path_segment
+%type <U<AST::Path>>                type_annotation
+%type <std::vector<Symbol>>         type_path
+%type <Symbol>                      path_segment
 
-// Items
-%type <MRC::AST::Item>              item
-%type <MRC::AST::Fn>                function
-%type <MRC::AST::Fn::Params>        function_parameters
-%type <MRC::AST::Param>             function_parameter
-%type <MRC::AST::Fn::Body>          function_block
+
+/* -- Initializers -- */
+%type <U<AST::Expr>>                init
+%type <Opt<U<AST::Expr>>>           init.opt
+%type <U<AST::Type>>                     impl
+%type <Opt<U<AST::Type>>>                impl.opt
+
+
+/* -- Items -- */
+%type <U<AST::Item>>              item
+
+%type <U<AST::Fn>>                  function
+%type <AST::Fn::Params>             parameters
+%type <Opt<AST::Fn::Params>>        parameters.opt
+%type <AST::Param>                  parameter
+%type <AST::Fn::Body>               block
+%type <U<AST::Local>>               local
+
+%verbose
+%define parse.trace
+%define parse.error verbose
 
 %%
 
 program
-    : statement program     { ast->insert(std::move($1));
-    }
+    : statement program     { ast->insert(std::move($1)); }
     | EOF                   { }
+    ;
+
+statements
+    : statement {
+        $$.push_back(std::move($1));
+    }
+    | statements statement {
+        $$ = std::move($1);
+        $$.push_back(std::move($2));
+    }
+    | statement expr_without_block {
+        $$.push_back(std::move($1));
+        auto semi = Stmt::makeSemi(std::move($2));
+        $$.push_back(std::move(semi));
+    }
+    | statements statement expr_without_block {
+        $$ = std::move($1);
+        $$.push_back(std::move($2));
+        auto semi = Stmt::makeSemi(std::move($3));
+        $$.push_back(std::move(semi));
+    }
+    | expr_without_block {
+        auto semi = Stmt::makeSemi(std::move($1));
+        $$.push_back(std::move(semi));
+    }
     ;
 
 item
     : FN identifier function {
-        auto u_fn = std::make_unique<Fn>(std::move($3));
-        $$ = Item::makeFn(std::move($2), std::move(u_fn));
+        $$ = MU<Item>(Item::makeFn(std::move($2), std::move($3)));
     }
     ;
 
 function
-    : LPAREN RPAREN function_block {
-        $$ = Fn({}, std::move($3));
-    }
-    | LPAREN RPAREN RIGHT_ARROW type function_block {
-        auto uo_type = std::optional(std::make_unique<Type>(std::move($4)));
-        $$ = Fn({}, std::move($5), std::move(uo_type));
-    }
-    | LPAREN function_parameters RPAREN function_block {
-        $$ = Fn(std::move($2), std::move($4));
-    }
-    | LPAREN function_parameters RPAREN RIGHT_ARROW type function_block {
-        auto uo_type = std::optional(std::make_unique<Type>(std::move($5)));
-        $$ = Fn(std::move($2), std::move($6), std::move(uo_type));
+    : LPAREN parameters RPAREN impl.opt block {
+        $$ = MU<Fn>(Fn(std::move($2), std::move($5), std::move($4)));
     }
     ;
 
-function_parameters
-    : function_parameter {
+parameters
+    :
+    | parameter {
         $$.push_back(std::move($1));
     }
-    | function_parameters COMMA function_parameter {
+    | parameters COMMA parameter {
         $$ = std::move($1);
         $$.push_back(std::move($3));
     }
     ;
 
-function_parameter
+parameters.opt
+    : { $$ = std::nullopt; }
+    | parameters { $$ = std::move($1); }
+    ;
+
+parameter
     : pattern COLON type {
-        auto u_pat = std::make_unique<Pat>(std::move($1));
-        auto u_type = std::make_unique<Type>(std::move($3));
-        $$ = Param(std::move(u_type), std::move(u_pat));
+        $$ = Param(std::move($3), std::move($1));
     }
     ;
 
-function_block
+block
     : block_expr {
-        auto u_block = std::make_unique<Block>(std::move($1));
-        $$ = std::optional(std::move(u_block));
+        $$ = std::optional(std::move($1));
     }
     | SEMI { $$ = std::nullopt; }
     ;
 
 /* Statements */
 statement
-    : item
-    | let_statement {
-        $$ = Stmt(std::move($1));
-    }
+    : item              { $$ = Stmt::makeItem(std::move($1)); }
+    | LET local SEMI    { $$ = Stmt::makeLet(std::move($2)); }
     ;
 
-let_statement
-    : LET pattern SEMI {
-        Local local = Local::makeDecl();
-        local.pat = std::make_unique<Pat>(std::move($2));
-        local.type = std::nullopt;
-        auto u_local = std::make_unique<Local>(std::move(local));
-        $$ = LetStmt(std::move(u_local));
-    }
-    | LET pattern EQ literal_expr SEMI {
-        auto u_expr = std::make_unique<Expr>(Expr::makeLit(std::move($4)));
-        Local local = Local::makeInit(std::move(u_expr));
-        local.pat = std::make_unique<Pat>(std::move($2));
-        local.type = std::nullopt;
-        auto u_local = std::make_unique<Local>(std::move(local));
-        $$ = LetStmt(std::move(u_local));
-    }
-    | LET pattern COLON type_annotation SEMI {
-        Local local = Local::makeDecl();
-        local.pat = std::make_unique<Pat>(std::move($2));
-
-        auto u_path = std::make_unique<Path>($4);
-        auto o_type = Type::makePath(std::move(u_path));
-        local.type = std::make_unique<Type>(std::move(o_type));
-        auto u_local = std::make_unique<Local>(std::move(local));
-        $$ = LetStmt(std::move(u_local));
-    }
-    | LET pattern COLON type_annotation EQ literal_expr SEMI {
-        auto u_expr = std::make_unique<Expr>(Expr::makeLit(std::move($6)));
-        Local local = Local::makeInit(std::move(u_expr));
-        local.pat = std::make_unique<Pat>(std::move($2));
-
-        auto u_path = std::make_unique<Path>($4);
-        auto o_type = Type::makePath(std::move(u_path));
-        local.type = std::make_unique<Type>(std::move(o_type));
-
-        auto u_local = std::make_unique<Local>(std::move(local));
-        $$ = LetStmt(std::move(u_local));
-    }
+local
+    : pattern typedecl.opt { $$ = MU<Local>(Local::makeDecl(std::move($1), std::move($2))); }
+    | pattern typedecl.opt init { $$ = MU<Local>(Local::makeInit(std::move($1), std::move($2), std::move($3))); }
     ;
 
 pattern
@@ -231,10 +224,10 @@ pattern
 
 identifier_pattern
     : identifier        {
-        $$ = MRC::AST::Pat::makeIdent(BindingMode::make(), std::move($1), std::nullopt);
+      $$ = MU<Pat>(Pat::makeIdent(BindingMode::make(), std::move($1), std::nullopt));
     }
     | MUT identifier {
-        $$ = MRC::AST::Pat::makeIdent(BindingMode::makeMut(), std::move($2), std::nullopt);
+        $$ = MU<Pat>(Pat::makeIdent(BindingMode::makeMut(), std::move($2), std::nullopt));
     }
     ;
 
@@ -242,15 +235,44 @@ identifier
     : IDENTIFIER { $$ = Ident($1.symbol); }
     ;
 
+init
+    : EQ expr { $$ = std::move($2); }
+    ;
+
+init.opt
+    : { $$ = std::nullopt; }
+    | init { $$ = std::move($1); }
+    ;
+
+impl
+    : RIGHT_ARROW type { $$ = std::move($2); }
+    ;
+
+impl.opt
+    : { $$ = std::nullopt; }
+    | RIGHT_ARROW type { $$ = std::move($2); }
+    ;
+
+typedecl.opt
+    : { $$ = std::nullopt; }
+    | COLON type { $$ = std::move($2); }
+    ;
+
 type
     : type_annotation {
-        auto u_path = std::make_unique<Path>(std::move($1));
-        $$ = Type::makePath(std::move(u_path));
+        $$ = MU<Type>(Type::makePath(std::move($1)));
+    }
+    ;
+
+type.opt
+    : { $$ = std::nullopt; }
+    | type {
+      $$ = std::move($1);
     }
     ;
 
 type_annotation
-    : type_path { $$ = MRC::AST::Path($1); }
+    : type_path { $$ = MU<Path>(Path(std::move($1))); }
     ;
 
 type_path
@@ -272,61 +294,34 @@ path_segment
     }
     ;
 
+
+
+/* Expressions */
 expr
-    : expr_without_block { $$ = $1 }
-    | expr_with_block { $$ = $1 }
-    ;
+  : expr_without_block { $$ = std::move($1); }
+  | expr_with_block { $$ = std::move($1); }
+  ;
 
 expr_without_block
-    : literal_expr { $$ = MRC::AST::Expr::makeLit(std::move($1)); }
-    ;
+  : literal_expr { $$ = MU<Expr>(Expr::makeLit(std::move($1))); }
+  ;
 
 expr_with_block
-    : block_expr {
-        auto u_block = std::make_unique<Block>(std::move($1));
-        $$ = Expr::makeBlock(std::move(u_block));
-    }
-    ;
+  : block_expr {
+      $$ = MU<Expr>(Expr::makeBlock(std::move($1)));
+  }
+  ;
 
 block_expr
-    : LBRACKET statements RBRACKET {
-        $$ = Block(std::move($2));
-    }
-    ;
-
-statements
-    : statement {
-        $$.push_back(std::move($1));
-    }
-    | statements statement {
-        $$ = std::move($1);
-        $$.push_back(std::move($2));
-    }
-    | statement expr_without_block {
-        $$.push_back(std::move($1));
-        auto u_expr = std::make_unique<Expr>(std::move($2));
-        auto semi = Stmt::makeSemi(std::move(u_expr));
-        $$.push_back(std::move(semi));
-    }
-    | statements statement expr_without_block {
-        $$ = std::move($1);
-        $$.push_back(std::move($2));
-        auto u_expr = std::make_unique<Expr>(std::move($3));
-        auto semi = Stmt::makeSemi(std::move(u_expr));
-        $$.push_back(std::move(semi));
-    }
-    | expr_without_block {
-        auto u_expr = std::make_unique<Expr>(std::move($1));
-        auto semi = Stmt::makeSemi(std::move(u_expr));
-        $$.push_back(std::move(semi));
-    }
-    ;
-
+  : LBRACKET statements RBRACKET {
+      $$ = MU<Block>(Block(std::move($2)));
+  }
+  ;
 
 literal_expr
-    : INTEGER_LITERAL           { $$ = MU<MRC::AST::Lit>(MRC::AST::Lit::makeInteger($1)); }
-    | FLOAT_LITERAL             { $$ = MU<MRC::AST::Lit>(MRC::AST::Lit::makeFloat($1)); }
-    | STR_LITERAL               { $$ = MU<MRC::AST::Lit>(MRC::AST::Lit::makeStr($1)); }
+    : INTEGER_LITERAL           { $$ = MU<Lit>(Lit::makeInteger($1)); }
+    | FLOAT_LITERAL             { $$ = MU<Lit>(Lit::makeFloat($1)); }
+    | STR_LITERAL               { $$ = MU<Lit>(Lit::makeStr($1)); }
     ;
 
 %%
