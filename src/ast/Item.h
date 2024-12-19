@@ -5,10 +5,10 @@
 namespace MRC::AST {
 struct Item;
 
-struct FnKind {
+struct FnItem {
   U<Fn> fn;
-  FnKind() = default;
-  FnKind(U<Fn> fn) : fn(std::move(fn)) {}
+  FnItem() = default;
+  FnItem(U<Fn> fn) : fn(std::move(fn)) {}
 };
 
 // To be supported later
@@ -17,11 +17,11 @@ struct FnKind {
 // Const
 
 struct Item {
-  using ItemKind = std::variant<FnKind>;
+  using ItemKind = std::variant<FnItem>;
   Ident ident;
   ItemKind kind;
   Item() = default;
   explicit Item(Ident ident, ItemKind kind) : kind(std::move(kind)) {}
-  static Item makeFn(Ident ident, U<Fn> fn) { return Item(std::move(ident), FnKind(std::move(fn))); }
+  static Item makeFn(Ident ident, U<Fn> fn) { return Item(std::move(ident), FnItem(std::move(fn))); }
 };
 } // namespace MRC::AST

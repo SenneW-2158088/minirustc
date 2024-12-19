@@ -1,4 +1,6 @@
 #include "Visitor.h"
+#include "ast/Item.h"
+#include "util/util.h"
 
 using namespace MRC::AST;
 
@@ -7,6 +9,8 @@ void walk_stmt(Visitor *visitor, Stmt &stmt) {
   std::visit(
       overloaded{[&visitor](ExprStmt &val) { visitor->visit_expr(*val.expr); },
                  [&visitor](LetStmt &val) { visitor->visit_local(*val.local); },
+                 [&visitor](ItemStmt &val) { visitor->visit_item(*val.item); },
+                 [&visitor](SemiStmt &val) { visitor->visit_expr(*val.expr); },
                  [&visitor](EmptyStmt &val) { return; },
                  [&visitor](auto &val) { /* TODO */
                                          return;
@@ -77,6 +81,16 @@ void walk_pat(Visitor *visitor, Pat &pat) {
 
 void walk_path(Visitor *visitor, Path &path) {
   // Do nothing
+}
+
+void walk_item(Visitor *visitor, Item &item) {
+  std::visit(overloaded {
+    [&visitor](FnItem& val){
+      // TODO
+    },
+  }, item.kind);
+
+  walk_ident(visitor, item.ident);
 }
 
 void Visitor::visit_stmt(Stmt &stmt) { walk_stmt(this, stmt); }

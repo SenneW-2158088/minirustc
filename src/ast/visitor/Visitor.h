@@ -15,6 +15,7 @@ void walk_block(Visitor *visitor, Block &block);
 void walk_local(Visitor *visitor, Local &local);
 void walk_pat(Visitor *visitor, Pat &pat);
 void walk_path(Visitor *visitor, Path &path);
+void walk_item(Visitor *visitor, Item &path);
 
 // Then define the visitor struct
 struct Visitor {
@@ -29,5 +30,6 @@ public:
   virtual void visit_local(Local &local);
   virtual void visit_pat(Pat &pat);
   virtual void visit_path(Path &path);
+  virtual void visit_item(Item &path);
 };
 } // namespace MRC::AST

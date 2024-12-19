@@ -7,9 +7,6 @@
 
 namespace MRC::AST {
 
-struct Pat;  // Forward declare
-struct Expr; // Forward declare
-
 /* Literal expression */
 struct LitExpr {
   U<Lit> lit;

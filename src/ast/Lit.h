@@ -31,13 +31,8 @@ public:
     std::regex r("([0-9]+)(_*)([ui][0-9]{2})*"); // Made the suffix group non-capturing
     std::smatch matches;
     if (std::regex_search(token.symbol, matches, r)) {
-      // std::cout << token.symbol << std::endl;
-      std::cout << matches[1].str() << std::endl;
-      std::cout << matches[3].str() << std::endl;
-      std::cout << "ahhhhhh" << std::endl;
       return Lit(matches[1].str(), matches[3].str(), IntegerLit());
     }
-    std::cout << "invalid" << std::endl;
     throw std::exception();
   }
 
