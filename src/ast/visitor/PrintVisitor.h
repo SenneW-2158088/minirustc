@@ -123,5 +123,7 @@ public:
     print_indent();
     std::cout << "}\n";
   }
+
+  void visit_item(Item &item) override {}
 };
 } // namespace MRC::AST

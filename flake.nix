@@ -26,6 +26,7 @@
             # C++ toolchain
             clang-tools # for clangd
 
+            gdb
             # Build tools
             cmake
             bison

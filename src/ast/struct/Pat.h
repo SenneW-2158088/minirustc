@@ -27,7 +27,7 @@ public:
 
 struct Pat {
   using PatKind = std::variant<IdentPat, LitPat>;
-  PatKind kind;
+  PatKind kind{};
 
 public:
   Pat() = default;
@@ -36,9 +36,9 @@ public:
 
   static Pat makeIdent(BindingMode binding, Ident identifier,
                        Opt<U<Pat>> pattern = std::nullopt) {
-    return Pat(IdentPat(std::move(binding), std::move(identifier),
-                        std::move(pattern)));
+    return Pat(std::move(IdentPat(std::move(binding), std::move(identifier),
+                        std::move(pattern))));
   }
-  static Pat makeLit(U<Expr> expr) { return Pat(LitPat(std::move(expr))); }
+  static Pat makeLit(U<Expr> expr) { return Pat(std::move(LitPat(std::move(expr)))); }
 };
 } // namespace MRC::AST

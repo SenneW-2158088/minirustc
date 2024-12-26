@@ -68,14 +68,15 @@ void walk_local(Visitor *visitor, Local &local) {
 }
 
 void walk_pat(Visitor *visitor, Pat &pat) {
-  std::visit(
+    std::visit(
       overloaded{[visitor](IdentPat &val) {
                    visitor->visit_ident(val.identifier);
                    if (val.pattern.has_value()) {
                      visitor->visit_pat(*val.pattern.value());
                    }
                  },
-                 [visitor](LitPat &val) { visitor->visit_expr(*val.expr); }},
+                 [visitor](LitPat &val) { visitor->visit_expr(*val.expr); },
+                 [visitor](auto &val) { std::cout << "none" << std::endl; }},
       pat.kind);
 }
 
@@ -84,11 +85,13 @@ void walk_path(Visitor *visitor, Path &path) {
 }
 
 void walk_item(Visitor *visitor, Item &item) {
-  std::visit(overloaded {
-    [&visitor](FnItem& val){
-      // TODO
-    },
-  }, item.kind);
+  std::visit(
+      overloaded{
+          [visitor](FnItem &val) {
+            // TODO
+          },
+      },
+      item.kind);
 
   walk_ident(visitor, item.ident);
 }
@@ -102,4 +105,5 @@ void Visitor::visit_block(Block &block) { walk_block(this, block); }
 void Visitor::visit_local(Local &local) { walk_local(this, local); }
 void Visitor::visit_pat(Pat &pat) { walk_pat(this, pat); }
 void Visitor::visit_path(Path &path) { walk_path(this, path); }
+void Visitor::visit_item(Item &item) { walk_item(this, item); }
 } // namespace MRC::AST

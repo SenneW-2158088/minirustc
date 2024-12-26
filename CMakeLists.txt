@@ -49,7 +49,7 @@ set(DRIVER
 )
 
 set(AST
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/ast/AST.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ast/Ast.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ast/Expr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ast/Stmt.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ast/Ident.h
