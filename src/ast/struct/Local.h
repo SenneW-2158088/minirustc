@@ -26,9 +26,11 @@ struct Local {
 public:
   Local() = default;
 
-  explicit Local(U<Pat> pat, Opt<U<Type>> type, LocalKind kind) : kind(std::move(kind)) {}
+  explicit Local(U<Pat> pat, Opt<U<Type>> type, LocalKind kind) : kind(std::move(kind)), pat(std::move(pat)), type(std::move(type)) {}
 
-  static Local makeDecl(U<Pat> pat, Opt<U<Type>> type) { return Local(std::move(pat), std::move(type), DeclLocal()); }
+  static Local makeDecl(U<Pat> pat, Opt<U<Type>> type) {
+      return Local(std::move(pat), std::move(type), DeclLocal());
+  }
   static Local makeInit(U<Pat> pat, Opt<U<Type>> type, U<Expr> expr) {
     return Local(std::move(pat), std::move(type), InitLocal(std::move(expr)));
   }

@@ -1,6 +1,8 @@
 #include "Visitor.h"
 #include "ast/Item.h"
 #include "util/util.h"
+#include <cstdio>
+#include <unistd.h>
 
 using namespace MRC::AST;
 
@@ -53,6 +55,7 @@ void walk_block(Visitor *visitor, Block &block) {
 }
 
 void walk_local(Visitor *visitor, Local &local) {
+  visitor->visit_pat(*local.pat);
   std::visit(
       overloaded{[visitor](InitLocal &val) { visitor->visit_expr(*val.expr); },
                  [visitor](InitElseLocal &val) {
@@ -61,14 +64,13 @@ void walk_local(Visitor *visitor, Local &local) {
                  },
                  [](auto &val) { /* do nothing */ }},
       local.kind);
-  visitor->visit_pat(*local.pat);
   if (local.type.has_value()) {
     visitor->visit_type(*local.type.value());
   }
 }
 
 void walk_pat(Visitor *visitor, Pat &pat) {
-    std::visit(
+  std::visit(
       overloaded{[visitor](IdentPat &val) {
                    visitor->visit_ident(val.identifier);
                    if (val.pattern.has_value()) {
