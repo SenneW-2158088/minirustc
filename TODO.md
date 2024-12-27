@@ -7,10 +7,11 @@
 
 # DONE
 
-* Fix ast printer, make sure every type can be printed.
+* Create and test parsing of all basic test cases
+* Complete the russt specific type declarations
+* Start type checker, data structures + basic Typed Syntax Tree (TST)
 
 # TODO
 
 * Parse specific rust types
-* Start type checker, data structures + basic Typed Syntax Tree (TST)
 * Start a simple interpreter

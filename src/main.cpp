@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
     // driver.parse("fn main() -> i32;");
     auto method = R"(
     fn main() -> i32 {
-      let a = 30;
+      let a = 30.0;
       fn a() {
         let b = 20;
       }
