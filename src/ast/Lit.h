@@ -3,9 +3,7 @@
 #include "Token.h"
 #include "util/util.h"
 #include <exception>
-#include <ostream>
 #include <regex>
-#include <string>
 #include <variant>
 
 namespace MRC::AST {
@@ -25,7 +23,7 @@ public:
   Lit() : kind() {}
 
   explicit Lit(Symbol symbol, Opt<Symbol> suffix, LiteralKind k)
-      : symbol(symbol), suffix(suffix), kind(std::move(k)) {}
+      : symbol(std::move(symbol)), suffix(std::move(suffix)), kind(std::move(k)) {}
 
   static Lit makeInteger(Token token) {
     std::regex r("([0-9]+)(_*)([ui][0-9]{2})*"); // Made the suffix group non-capturing

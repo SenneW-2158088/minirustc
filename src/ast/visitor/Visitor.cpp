@@ -1,5 +1,7 @@
 #include "Visitor.h"
+#include "ast/Expr.h"
 #include "ast/Item.h"
+#include "ast/struct/Fn.h"
 #include "util/util.h"
 #include <cstdio>
 #include <unistd.h>
@@ -28,16 +30,34 @@ void walk_expr(Visitor *visitor, Expr &expr) {
                    visitor->visit_expr(*val.expr);
                    visitor->visit_pat(*val.pattern);
                  },
-                 [&visitor](auto &val) { /* TODO */ }},
+                 [&visitor](BlockExpr &val) { visitor->visit_block(*val.block); },
+                 [&visitor](IfExpr &val) {
+                     visitor->visit_expr(*val.expr);
+                     visitor->visit_block(*val.block);
+                     if(val.elseExpr.has_value()) {
+                        visitor->visit_expr(*val.elseExpr.value());
+                     }
+                 },
+                 [&visitor](LoopExpr &val) { visitor->visit_block(*val.block); },
+                 [&visitor](WhileExpr &val) {
+                     visitor->visit_expr(*val.expr);
+                     visitor->visit_block(*val.block);
+                 }},
       expr.kind);
 }
 
 void walk_lit(Visitor *visitor, Lit &lit) {
-  std::visit([](auto &val) {}, lit.kind);
+
+  visitor->visit_symbol(lit.symbol);
+
+  if(lit.suffix.has_value()) {
+      visitor->visit_symbol(lit.suffix.value());
+  }
 }
 
 void walk_ident(Visitor *visitor, Ident &ident) {
   // nothing to do
+  visitor->visit_symbol(ident.symbol);
 }
 
 void walk_type(Visitor *visitor, Type &type) {
@@ -84,18 +104,39 @@ void walk_pat(Visitor *visitor, Pat &pat) {
 
 void walk_path(Visitor *visitor, Path &path) {
   // Do nothing
+  for(auto &segment : path.segments) {
+      visitor->visit_symbol(segment);
+  }
 }
 
 void walk_item(Visitor *visitor, Item &item) {
   std::visit(
       overloaded{
           [visitor](FnItem &val) {
-            // TODO
+            visitor->visit_fn(*val.fn);
           },
       },
       item.kind);
 
   walk_ident(visitor, item.ident);
+}
+
+void walk_fn(Visitor *visitor, Fn &fn) {
+    // Parse params
+    for(Param &param : fn.params)  {
+      visitor->visit_type(*param.type);
+      visitor->visit_pat(*param.pat);
+   }
+
+   // parse body
+   if(fn.body.has_value()) {
+       visitor->visit_block(*fn.body.value());
+   }
+
+   // parse return type
+   if(fn.type.has_value()) {
+       visitor->visit_type(*fn.type.value());
+   }
 }
 
 void Visitor::visit_stmt(Stmt &stmt) { walk_stmt(this, stmt); }
@@ -108,4 +149,6 @@ void Visitor::visit_local(Local &local) { walk_local(this, local); }
 void Visitor::visit_pat(Pat &pat) { walk_pat(this, pat); }
 void Visitor::visit_path(Path &path) { walk_path(this, path); }
 void Visitor::visit_item(Item &item) { walk_item(this, item); }
+void Visitor::visit_symbol(Symbol &symbol) { return; }
+void Visitor::visit_fn(Fn &fn) { walk_fn(this, fn); }
 } // namespace MRC::AST

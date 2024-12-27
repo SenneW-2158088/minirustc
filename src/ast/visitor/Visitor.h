@@ -31,5 +31,7 @@ public:
   virtual void visit_pat(Pat &pat);
   virtual void visit_path(Path &path);
   virtual void visit_item(Item &path);
+  virtual void visit_symbol(Symbol &symbol);
+  virtual void visit_fn(Fn &fn);
 };
 } // namespace MRC::AST

@@ -21,7 +21,7 @@ struct Item {
   Ident ident;
   ItemKind kind;
   Item() = default;
-  explicit Item(Ident ident, ItemKind kind) : kind(std::move(kind)) {}
+  explicit Item(Ident ident, ItemKind kind) : ident(std::move(ident)), kind(std::move(kind)) {}
   static Item makeFn(Ident ident, U<Fn> fn) { return Item(std::move(ident), FnItem(std::move(fn))); }
 };
 } // namespace MRC::AST

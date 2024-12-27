@@ -4,7 +4,9 @@
 #include <string>
 #include <variant>
 
+#include "Token.h"
 #include "ast/visitor/Visitor.h"
+#include "util/util.h"
 
 namespace MRC::AST {
 struct PrintVisitor : Visitor {
@@ -52,11 +54,18 @@ public:
     std::cout << "Lit {\n";
     {
       ScopeGuard guard(indent_level);
+
       Visitor::visit_lit(lit);
+
+      std::visit(overloaded {
+        [](auto &val){}
+      }, lit.kind);
+
     }
     print_indent();
     std::cout << "}\n";
   }
+
 
   void visit_ident(Ident &ident) override {
     print_indent();
@@ -124,6 +133,33 @@ public:
     std::cout << "}\n";
   }
 
-  void visit_item(Item &item) override {}
+  void visit_item(Item &item) override {
+      print_indent();
+
+      std::cout << "Item {\n";
+      {
+        ScopeGuard guard(indent_level);
+        Visitor::visit_item(item);
+      }
+      print_indent();
+      std::cout << "}\n";
+  }
+
+  void visit_symbol(Symbol &symbol) override {
+      print_indent();
+      std::cout << "Symbol { " << symbol << " }" << std::endl;
+  }
+
+  void visit_fn(Fn &fn) override {
+      print_indent();
+      std::cout << "Fn {\n";
+      {
+        ScopeGuard guard(indent_level);
+        Visitor::visit_fn(fn);
+      }
+      print_indent();
+      std::cout << "}\n";
+  }
+
 };
 } // namespace MRC::AST

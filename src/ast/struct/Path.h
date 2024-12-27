@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include "lexer/Token.h"
 
 namespace MRC::AST {
