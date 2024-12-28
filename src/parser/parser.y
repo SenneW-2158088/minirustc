@@ -96,6 +96,8 @@
 %type <U<AST::Lit>>                 literal_expr
 %type <U<AST::Block>>               block_expr
 
+%type <U<AST::Expr>>                loop_expr
+
 /* -- Identifier -- */
 %type <AST::Ident>                  identifier
 
@@ -142,7 +144,8 @@ program
     ;
 
 statements
-    : statement {
+    :
+    | statement {
         $$.push_back(std::move($1));
     }
     | statements statement {
@@ -211,6 +214,7 @@ block
 statement
     : item              { $$ = Stmt::makeItem(std::move($1)); }
     | LET local SEMI    { $$ = Stmt::makeLet(std::move($2)); }
+    | expr              { $$ = Stmt::makeExpr(std::move($1)); }
     ;
 
 local
@@ -310,6 +314,9 @@ expr_with_block
   : block_expr {
       $$ = MU<Expr>(Expr::makeBlock(std::move($1)));
   }
+  | loop_expr {
+    $$ = std::move($1);
+    }
   ;
 
 block_expr
@@ -318,10 +325,20 @@ block_expr
   }
   ;
 
+loop_expr
+    : LOOP block_expr {
+        $$ = MU<Expr>(Expr::makeLoop(std::move($2)));
+    }
+    | WHILE expr block_expr {
+        $$ = MU<Expr>(Expr::makeWhile(std::move($2), std::move($3)));
+    }
+    ;
+
 literal_expr
     : INTEGER_LITERAL           { $$ = MU<Lit>(Lit::makeInteger($1)); }
     | FLOAT_LITERAL             { $$ = MU<Lit>(Lit::makeFloat($1)); }
     | STR_LITERAL               { $$ = MU<Lit>(Lit::makeStr($1)); }
+    | BOOLEAN_LITERAL           { $$ = MU<Lit>(Lit::makeBoolean($1)); }
     ;
 
 %%

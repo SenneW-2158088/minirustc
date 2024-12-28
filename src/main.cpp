@@ -26,6 +26,14 @@ int main(int argc, char* argv[]) {
     auto method = R"(
     fn main() -> i32 {
       let a = 30.0;
+
+      loop {
+      }
+
+      while true {
+
+      }
+
       fn a() {
         let b = 20;
       }

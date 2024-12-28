@@ -103,8 +103,8 @@ FLOAT_SUFFIX    (f32|f64)
 "fn"        { return MRC::Token(yytext, "", Token::TOKEN_FN, m_driver.location); }
 "let"       { return MRC::Token(yytext, "", Token::TOKEN_LET, m_driver.location); }
 "mut"       { return MRC::Token(yytext, "", Token::TOKEN_MUT, m_driver.location); }
-"true"      { return MRC::Token(yytext, "", Token::TOKEN_TRUE, m_driver.location); }
-"false"     { return MRC::Token(yytext, "", Token::TOKEN_FALSE, m_driver.location); }
+"true"      { return MRC::Token(yytext, "", Token::TOKEN_BOOLEAN_LITERAL, m_driver.location); }
+"false"     { return MRC::Token(yytext, "", Token::TOKEN_BOOLEAN_LITERAL, m_driver.location); }
 
 "::"     { return MRC::Token(yytext, "", Token::TOKEN_SCOPE_RESOLUTION, m_driver.location); }
 
