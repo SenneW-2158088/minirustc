@@ -13,11 +13,16 @@ using ExprPtr = U<Expr>;
 typedef int Index;
 
 struct Ast {
+  std::vector<Item> items{};
   std::vector<Stmt> statements{};
   std::vector<Expr> expressions{};
 
 public:
   Ast() = default;
+  Index insert(Item item) {
+    items.push_back(std::move(item));
+    return items.size() - 1;
+  }
   Index insert(Stmt stmt) {
     statements.push_back(std::move(stmt));
     return statements.size() - 1;

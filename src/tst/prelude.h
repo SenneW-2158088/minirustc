@@ -1,6 +1,9 @@
 #pragma once
 
+#include <cstdint>
+
 namespace MRC::TST {
+using Index = int32_t;
 struct Expr;
 struct Stmt;
 struct Block;
@@ -12,7 +15,7 @@ struct Literal;
 }  // namespace MRC::HIR
 
 #include "tst/Type.h"
-// #include "hir/Expr.h"
+#include "tst/Expr.h"
 // #include "hir/Stmt.h"
 // #include "hir/Block.h"
 // #include "hir/Function.h"

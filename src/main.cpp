@@ -7,8 +7,8 @@
 
 void printAst(MRC::AST::Ast* ast) {
   MRC::AST::PrintVisitor printer;
-  for (auto &stmt : ast->statements){
-    printer.visit_stmt(stmt);
+  for (auto &item : ast->items){
+    printer.visit_item(item);
   }
 }
 
@@ -24,19 +24,13 @@ int main(int argc, char* argv[]) {
     // driver.parse("fn main(hello: i32);");
     // driver.parse("fn main() -> i32;");
     auto method = R"(
+    fn b(){
+        let c = 30;
+    }
     fn main() -> i32 {
-      let a = 30.0;
+      let a = 30;
 
-      loop {
-      }
-
-      while true {
-
-      }
-
-      fn a() {
-        let b = 20;
-      }
+      let c = b();
     }
     )";
     driver.parse(method);

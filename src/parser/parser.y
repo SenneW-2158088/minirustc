@@ -90,13 +90,14 @@
 
 /* -- Expressions -- */
 %type <U<AST::Expr>>                expr
+%type <std::vector<U<AST::Expr>>>   exprs
 %type <U<AST::Expr>>                expr_without_block
 %type <U<AST::Expr>>                expr_with_block
 
 %type <U<AST::Lit>>                 literal_expr
 %type <U<AST::Block>>               block_expr
-
 %type <U<AST::Expr>>                loop_expr
+%type <U<AST::Expr>>                call_expr
 
 /* -- Identifier -- */
 %type <AST::Ident>                  identifier
@@ -137,10 +138,14 @@
 %define parse.error verbose
 
 %%
-
 program
-    : statement program     { ast->insert(std::move($1)); }
-    | EOF                   { }
+    : items         { }
+    | EOF          { }
+    ;
+
+items
+    : item         { ast->insert(std::move(*$1)); }
+    | items item   { ast->insert(std::move(*$2)); }
     ;
 
 statements
@@ -214,7 +219,7 @@ block
 statement
     : item              { $$ = Stmt::makeItem(std::move($1)); }
     | LET local SEMI    { $$ = Stmt::makeLet(std::move($2)); }
-    | expr              { $$ = Stmt::makeExpr(std::move($1)); }
+    | expr SEMI             { $$ = Stmt::makeExpr(std::move($1)); }
     ;
 
 local
@@ -306,8 +311,19 @@ expr
   | expr_with_block { $$ = std::move($1); }
   ;
 
+exprs
+    :
+    | expr { $$.push_back(std::move($1)); }
+    | exprs, expr {
+        $$ = std::move($1);
+        $$.push_back(std::move($2));
+    }
+    ;
+
 expr_without_block
   : literal_expr { $$ = MU<Expr>(Expr::makeLit(std::move($1))); }
+  | type_annotation { $$ = MU<Expr>(Expr::makePath(std::move($1))); }
+  | expr LPAREN exprs RPAREN { $$ = MU<Expr>(Expr::makeCall(std::move($1), std::move($3))); }
   ;
 
 expr_with_block
@@ -346,6 +362,6 @@ literal_expr
 namespace MRC {
     void Parser::error(const location &location, const std::string &message)
     {
-        std::cerr << "Error at lines " << location << ": " << message << std::endl;
+        std::cerr << "Error at lines " << driver->location << ": " << message << std::endl;
     }
 }

@@ -38,6 +38,13 @@ void walk_expr(Visitor *visitor, Expr &expr) {
                         visitor->visit_expr(*val.elseExpr.value());
                      }
                  },
+                 [&visitor](CallExpr &val) {
+                     visitor->visit_expr(*val.expr);
+                     for (auto &param : val.params) {
+                         visitor->visit_expr(*param);
+                     }
+                 },
+                 [&visitor](PathExpr &val) { visitor->visit_path(*val.path); },
                  [&visitor](LoopExpr &val) { visitor->visit_block(*val.block); },
                  [&visitor](WhileExpr &val) {
                      visitor->visit_expr(*val.expr);

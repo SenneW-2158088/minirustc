@@ -1,9 +1,10 @@
 #pragma once
 
+#include <variant>
+#include <vector>
+
 #include "ast/prelude.h"
 #include "util/util.h"
-
-#include <variant>
 
 namespace MRC::AST {
 
@@ -67,9 +68,23 @@ struct WhileExpr {
       : expr(std::move(expr)), block(std::move(block)) {}
 };
 
+struct PathExpr {
+    U<Path> path;
+    PathExpr() = default;
+    PathExpr(U<Path> path) : path(std::move(path)) {}
+};
+
+struct CallExpr {
+  U<Expr> expr;
+  std::vector<U<Expr>> params;
+  CallExpr() = default;
+  CallExpr(U<Expr> expr, std::vector<U<Expr>> params)
+      : expr(std::move(expr)), params(std::move(params)) {}
+};
+
 struct Expr {
   using ExprKind = std::variant<LitExpr, ExprExpr, LetExpr, BlockExpr,
-                                WhileExpr, IfExpr, LoopExpr>;
+                                WhileExpr, IfExpr, LoopExpr, CallExpr, PathExpr>;
   ExprKind kind;
 
 public:
@@ -77,10 +92,16 @@ public:
 
   explicit Expr(ExprKind kind) : kind(std::move(kind)) {}
 
+  static Expr makeCall(U<Expr> expr, std::vector<U<Expr>> params) {
+    return Expr(CallExpr(std::move(expr), std::move(params)));
+  }
   static Expr makeLit(U<Lit> lit) { return Expr(LitExpr(std::move(lit))); }
   static Expr makeExpr(U<Expr> expr) { return Expr(ExprExpr(std::move(expr))); }
   static Expr makeLet(U<Pat> pattern, U<Expr> expr) {
     return Expr(LetExpr(std::move(pattern), std::move(expr)));
+  }
+  static Expr makePath(U<Path> path) {
+      return Expr(PathExpr(std::move(path)));
   }
   static Expr makeIf(U<Expr> condition, U<Block> thenBlock) {
     return Expr(
