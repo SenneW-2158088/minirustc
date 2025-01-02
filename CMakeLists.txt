@@ -65,11 +65,18 @@ set(AST
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ast/visitor/PrintVisitor.h
 )
 
+set(TST
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/typechecking/Type.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/typechecking/Type.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/typechecking/TypeChecker.h
+)
+
 # Main executable
 add_executable(mrc
     ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
     ${DRIVER}
     ${AST}
+    ${TST}
     ${GENERATED_SOURCES}
 )
 

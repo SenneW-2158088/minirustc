@@ -4,6 +4,9 @@
 #include <vector>
 
 #include "ast/prelude.h"
+#include "tst/Type.h"
+#include "tst/tst.h"
+#include "typechecking/Type.h"
 #include "util/util.h"
 
 namespace MRC::AST {
@@ -86,11 +89,12 @@ struct Expr {
   using ExprKind = std::variant<LitExpr, ExprExpr, LetExpr, BlockExpr,
                                 WhileExpr, IfExpr, LoopExpr, CallExpr, PathExpr>;
   ExprKind kind;
+  TS::CheckType type;
 
 public:
-  Expr() : kind() {}
+  Expr() : kind(), type(TS::CheckType::makeVar(TS::Type::MakeUnset())) {}
 
-  explicit Expr(ExprKind kind) : kind(std::move(kind)) {}
+  explicit Expr(ExprKind kind) : kind(std::move(kind)), type(TS::CheckType::makeVar(TS::Type::MakeUnset())) {}
 
   static Expr makeCall(U<Expr> expr, std::vector<U<Expr>> params) {
     return Expr(CallExpr(std::move(expr), std::move(params)));

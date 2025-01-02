@@ -16,12 +16,12 @@ struct Block;
 struct BindingMode;
 } // namespace MRC::AST
 
+#include "ast/struct/Path.h"
+#include "ast/Type.h"
 #include "ast/Expr.h"
 #include "ast/Ident.h"
 #include "ast/Lit.h"
 #include "ast/Stmt.h"
-#include "ast/struct/Path.h"
-#include "ast/Type.h"
 #include "ast/Item.h"
 #include "ast/struct/BindingMode.h"
 #include "ast/struct/Block.h"

@@ -2,14 +2,23 @@
 #include "parser/parser.h"
 #include "driver/Driver.h"
 #include "ast/visitor/PrintVisitor.h"
+#include "typechecking/TypeChecker.h"
 
 #include <cstdio>
+#include <cwchar>
 
 void printAst(MRC::AST::Ast* ast) {
   MRC::AST::PrintVisitor printer;
   for (auto &item : ast->items){
     printer.visit_item(item);
   }
+}
+
+void type_check(MRC::AST::Ast *ast) {
+    MRC::TS::TypeChecker typechecker;
+    for (auto &item : ast->items){
+      typechecker.visit_item(item);
+    }
 }
 
 int main(int argc, char* argv[]) {
@@ -24,13 +33,9 @@ int main(int argc, char* argv[]) {
     // driver.parse("fn main(hello: i32);");
     // driver.parse("fn main() -> i32;");
     auto method = R"(
-    fn b(){
-        let c = 30;
-    }
-    fn main() -> i32 {
-      let a = 30;
-
-      let c = b();
+    fn main() {
+      let a: i8 = 30u8;
+      let b = 30;
     }
     )";
     driver.parse(method);
@@ -38,6 +43,8 @@ int main(int argc, char* argv[]) {
     // driver.parse("let a = 30;");
     // driver.parse("let a: i32;");
     // driver.parse("let a: i32 = 32;");
+    type_check(driver.ast());
+
     printAst(driver.ast());
 
     return 0;

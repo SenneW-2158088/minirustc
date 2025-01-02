@@ -41,6 +41,9 @@ public:
   void visit_expr(Expr &expr) override {
     print_indent();
     std::cout << "Expr {\n";
+
+    print_indent();
+    std::cout << "Type:" << expr.type.to_string() << std::endl;
     {
       ScopeGuard guard(indent_level);
       Visitor::visit_expr(expr);
@@ -52,6 +55,8 @@ public:
   void visit_lit(Lit &lit) override {
     print_indent();
     std::cout << "Lit {\n";
+    print_indent();
+    std::cout << "Type:" << lit.check_type.to_string() << std::endl;
     {
       ScopeGuard guard(indent_level);
 
@@ -103,6 +108,10 @@ public:
   void visit_local(Local &local) override {
     print_indent();
     std::cout << "Local {\n";
+    if(local.type) {
+        print_indent();
+        std::cout << "Type:" << local.check_type.to_string() << std::endl;
+    }
     {
       ScopeGuard guard(indent_level);
       Visitor::visit_local(local);

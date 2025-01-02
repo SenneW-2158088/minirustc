@@ -22,4 +22,3 @@ struct Literal;
 #include "tst/Block.h"
 #include "tst/Function.h"
 #include "tst/Local.h"
-#include "tst/tst.h"

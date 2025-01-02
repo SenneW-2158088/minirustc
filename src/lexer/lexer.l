@@ -32,7 +32,7 @@ STR_LIT         \"({STR_CHAR})*\"
 
 /* Improved float pattern */
 INTEGER         {DEC_LIT}|{HEX_LIT}|{OCT_LIT}|{BIN_LIT}
-FLOAT           {DEC_LIT}(\.{DEC_LIT}?)?
+FLOAT           {DEC_LIT}\.{DEC_LIT}?
 STRING          {STR_LIT}
 IDENTIFIER      {LETTER}({LETTER}|{DEC_DIGIT})*
 
@@ -110,6 +110,10 @@ FLOAT_SUFFIX    (f32|f64)
 
 {IDENTIFIER} {
     return MRC::Token(yytext, "", Token::TOKEN_IDENTIFIER, m_driver.location);
+}
+
+{DEC_LIT} {
+    return MRC::Token(yytext, "", Token::TOKEN_INTEGER_LITERAL, m_driver.location);
 }
 
 {DEC_LIT}(_)*({INT_SUFFIX}|{FLOAT_SUFFIX}) {
