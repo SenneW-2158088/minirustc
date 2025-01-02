@@ -25,19 +25,23 @@ struct Lit {
 public:
   explicit Lit(Symbol symbol, Opt<Symbol> suffix, LiteralKind k, TS::CheckType type)
       : symbol(std::move(symbol)), suffix(std::move(suffix)), kind(std::move(k)), check_type(std::move(type)) {}
+
     static Lit makeInteger(Token token) {
-        std::regex r("([0-9]+(?:_[0-9]+)*)((?:i|u)(?:8|16|32|64|size))?");
+        // Match digits, optional underscore, and optional suffix
+        std::regex r("([0-9]+)(_)?([ui](?:8|16|32|64))?");
         std::smatch matches;
         if (std::regex_search(token.symbol, matches, r)) {
-            if(matches[2].str().empty()) {
-                return Lit(matches[1].str(), "", IntegerLit(), TS::CheckType::makeVar(TS::Type::makeInt(true, 32))); // default to i32
-            }
-            else {
-                std::string suffix = matches[2].str();
+            if(matches[3].str().empty()) {
+                return Lit(matches[1].str(), "", IntegerLit(),
+                          TS::CheckType::makeVar(TS::Type::makeInt(true, 32)));
+            } else {
+                std::string suffix = matches[3].str();
                 bool sign = suffix[0] == 'i';
                 std::string bits_str = suffix.substr(1);
-                int bits = bits_str == "size" ? 64 : std::stoi(bits_str); // handle usize case
-                return Lit(matches[1].str(), suffix, IntegerLit(), TS::CheckType::makeVar(TS::Type::makeInt(sign, bits)));
+                int bits;
+                bits = std::stoi(bits_str);
+                return Lit(matches[1].str(), suffix, IntegerLit(),
+                          TS::CheckType::makeVar(TS::Type::makeInt(sign, bits)));
             }
         }
         throw std::exception();
@@ -48,7 +52,19 @@ public:
   }
 
   static Lit makeFloat(Token token) {
-    return Lit(token.symbol, token.suffix, FloatLit(), TS::CheckType::makeVar(TS::Type::makeFloat(32)));
+      std::regex r("([0-9]+(?:_[0-9]+)*(?:\\.[0-9]+(?:_[0-9]+)*)?)(f(?:32|64))?");
+      std::smatch matches;
+      if (std::regex_search(token.symbol, matches, r)) {
+          if(matches[2].str().empty()) {
+              return Lit(matches[1].str(), "", FloatLit(), TS::CheckType::makeVar(TS::Type::makeFloat(64))); // default to f64
+          }
+          else {
+              std::string suffix = matches[2].str();
+              int bits = std::stoi(suffix.substr(1));
+              return Lit(matches[1].str(), suffix, FloatLit(), TS::CheckType::makeVar(TS::Type::makeFloat(bits)));
+          }
+      }
+      throw std::exception();
   }
 
   static Lit makeStr(Token token) {

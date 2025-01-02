@@ -35,7 +35,8 @@ int main(int argc, char* argv[]) {
     auto method = R"(
     fn main() {
       let a: i8 = 30u8;
-      let b = 30;
+      let b = 30_u16;
+      let c = 29.0f64;
     }
     )";
     driver.parse(method);
