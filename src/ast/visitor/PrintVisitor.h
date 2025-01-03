@@ -126,6 +126,10 @@ public:
   void visit_local(Local &local) override {
     print_indent();
     std::cout << "Local {\n";
+
+    print_indent();
+    std::cout << "Type:" << local.check_type.to_string() << std::endl;
+
     if(local.type) {
         print_indent();
         std::cout << "Type:" << local.check_type.to_string() << std::endl;

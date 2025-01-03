@@ -45,6 +45,12 @@ bool MRC::TS::Type::equals(const Type& other) const {
         [](const StringType&, const StringType&) -> bool {
             return true;
         },
+        [](const UnsetType&, const UnsetType&) -> bool {
+            return true;
+        },
+        [](const VoidType&, const VoidType&) -> bool {
+            return true;
+        },
         [](const FunctionType& a, const FunctionType& b) -> bool {
             if (a.params.size() != b.params.size()) {
                 return false;

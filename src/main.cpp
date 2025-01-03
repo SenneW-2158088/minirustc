@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
     // driver.parse("fn main() -> i32;");
     auto method = R"(
     fn main() {
-        let b: i8 = 10u16;
+        let b: u8 = 10;
     }
     )";
     driver.parse(method);
@@ -42,7 +42,11 @@ int main(int argc, char* argv[]) {
     // driver.parse("let a = 30;");
     // driver.parse("let a: i32;");
     // driver.parse("let a: i32 = 32;");
-    type_check(driver.ast());
+    try {
+        type_check(driver.ast());
+    }catch(MRC::TS::TypeError err) {
+        std::cout << err.what() << std::endl;
+    }
 
     printAst(driver.ast());
 
