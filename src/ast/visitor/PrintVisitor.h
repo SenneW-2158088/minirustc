@@ -5,6 +5,7 @@
 #include <variant>
 
 #include "Token.h"
+#include "ast/Expr.h"
 #include "ast/visitor/Visitor.h"
 #include "util/util.h"
 
@@ -44,6 +45,23 @@ public:
 
     print_indent();
     std::cout << "Type:" << expr.type.to_string() << std::endl;
+
+    if(std::holds_alternative<BinaryExpr>(expr.kind)){
+        auto &bin_expr = std::get<BinaryExpr>(expr.kind);
+        print_indent();
+        std::cout << "operation:" << bin_expr.op.to_string() << std::endl;
+    }
+    if(std::holds_alternative<AssignExpr>(expr.kind)){
+        auto &bin_expr = std::get<BinaryExpr>(expr.kind);
+        print_indent();
+        std::cout << "operation:" << bin_expr.op.to_string() << std::endl;
+    }
+    if(std::holds_alternative<AssignOpExpr>(expr.kind)){
+        auto &bin_expr = std::get<BinaryExpr>(expr.kind);
+        print_indent();
+        std::cout << "operation:" << bin_expr.op.to_string() << std::endl;
+    }
+
     {
       ScopeGuard guard(indent_level);
       Visitor::visit_expr(expr);

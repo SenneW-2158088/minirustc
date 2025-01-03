@@ -71,7 +71,7 @@
 %token <MRC::Token> EQ NE
 %token <MRC::Token> PLUSEQ MINUSEQ STAREQ SLASHEQ PERCENTEQ CARETEQ
 %token <MRC::Token> NOT AND OR ANDAND OROR SHL SHR
-%token <MRC::Token> NOTEQ ANDEQ OREQ
+%token <MRC::Token> EQEQ NOTEQ ANDEQ OREQ
 %token <MRC::Token> GT LT GTEQ LTEQ
 %token <MRC::Token> COMMA SEMI COLON RIGHT_ARROW LEFT_ARROW
 %token <MRC::Token> LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE
@@ -98,6 +98,7 @@
 %type <U<AST::Block>>               block_expr
 %type <U<AST::Expr>>                loop_expr
 %type <U<AST::Expr>>                call_expr
+%type <U<AST::Expr>>                operator_expr
 
 /* -- Identifier -- */
 %type <AST::Ident>                  identifier
@@ -149,26 +150,25 @@ items
     ;
 
 statements
-    :
-    | statement {
+    : statement {
         $$.push_back(std::move($1));
     }
     | statements statement {
         $$ = std::move($1);
         $$.push_back(std::move($2));
     }
-    | statement expr_without_block {
+    | statement expr_without_block SEMI {
         $$.push_back(std::move($1));
         auto semi = Stmt::makeSemi(std::move($2));
         $$.push_back(std::move(semi));
     }
-    | statements statement expr_without_block {
+    | statements statement expr_without_block SEMI {
         $$ = std::move($1);
         $$.push_back(std::move($2));
         auto semi = Stmt::makeSemi(std::move($3));
         $$.push_back(std::move(semi));
     }
-    | expr_without_block {
+    | expr_without_block SEMI {
         auto semi = Stmt::makeSemi(std::move($1));
         $$.push_back(std::move(semi));
     }
@@ -324,6 +324,7 @@ expr_without_block
   : literal_expr { $$ = MU<Expr>(Expr::makeLit(std::move($1))); }
   | type_annotation { $$ = MU<Expr>(Expr::makePath(std::move($1))); }
   | expr LPAREN exprs RPAREN { $$ = MU<Expr>(Expr::makeCall(std::move($1), std::move($3))); }
+  | operator_expr { $$ = std::move($1); }
   ;
 
 expr_with_block
@@ -357,6 +358,13 @@ literal_expr
     | BOOLEAN_LITERAL           { $$ = MU<Lit>(Lit::makeBoolean($1)); }
     ;
 
+operator_expr
+    : expr PLUS expr        { $$ = MU<Expr>(Expr::makeBinary(BinOp::makeAdd(), std::move($1), std::move($3))); }
+    | expr MINUS expr       { $$ = MU<Expr>(Expr::makeBinary(BinOp::makeSub(), std::move($1), std::move($3))); }
+    | expr STAR expr        { $$ = MU<Expr>(Expr::makeBinary(BinOp::makeMul(), std::move($1), std::move($3))); }
+    | expr SLASH expr       { $$ = MU<Expr>(Expr::makeBinary(BinOp::makeDiv(), std::move($1), std::move($3))); }
+    | expr EQ expr          { $$ = MU<Expr>(Expr::makeAssign(std::move($1), std::move($3))); }
+    ;
 %%
 
 namespace MRC {

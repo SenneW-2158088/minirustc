@@ -46,6 +46,21 @@ void walk_expr(Visitor *visitor, Expr &expr) {
                  },
                  [&visitor](PathExpr &val) { visitor->visit_path(*val.path); },
                  [&visitor](LoopExpr &val) { visitor->visit_block(*val.block); },
+                 [&visitor](BinaryExpr &val) {
+                     //TODO Add binop visitor
+                     visitor->visit_expr(*val.first);
+                    visitor->visit_expr(*val.second);
+                 },
+                 [&visitor](AssignExpr &val) {
+                     //TODO Add binop visitor
+                     visitor->visit_expr(*val.first);
+                     visitor->visit_expr(*val.second);
+                 },
+                 [&visitor](AssignOpExpr &val) {
+                     //TODO Add binop visitor
+                     visitor->visit_expr(*val.first);
+                     visitor->visit_expr(*val.second);
+                 },
                  [&visitor](WhileExpr &val) {
                      visitor->visit_expr(*val.expr);
                      visitor->visit_block(*val.block);

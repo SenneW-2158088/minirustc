@@ -34,9 +34,7 @@ int main(int argc, char* argv[]) {
     // driver.parse("fn main() -> i32;");
     auto method = R"(
     fn main() {
-      let a: i8 = 30u8;
-      let b = 30_u16;
-      let c = 29.0f64;
+        let b: i8 = 10u16;
     }
     )";
     driver.parse(method);

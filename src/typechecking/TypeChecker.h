@@ -69,6 +69,7 @@ public:
                           [&](AST::IfExpr &if_expr) {},
                           [&](AST::ExprExpr &if_expr) {},
                           [&](AST::CallExpr &if_expr) {},
+                          [&](auto &replace_me) {},
                           [&](AST::PathExpr &if_expr) {}},
                expr.kind);
   }

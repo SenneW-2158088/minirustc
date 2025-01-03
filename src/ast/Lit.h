@@ -41,7 +41,7 @@ public:
                 int bits;
                 bits = std::stoi(bits_str);
                 return Lit(matches[1].str(), suffix, IntegerLit(),
-                          TS::CheckType::makeVar(TS::Type::makeInt(sign, bits)));
+                          TS::CheckType::makeConcrete(TS::Type::makeInt(sign, bits)));
             }
         }
         throw std::exception();

@@ -2,6 +2,7 @@
 
 namespace MRC::AST {
 struct Ast;
+struct BinOp;
 struct Stmt;
 struct Expr;
 struct Iden;
@@ -16,9 +17,10 @@ struct Block;
 struct BindingMode;
 } // namespace MRC::AST
 
+#include "ast/Binop.h"
 #include "ast/struct/Path.h"
-#include "ast/Type.h"
 #include "ast/Expr.h"
+#include "ast/Type.h"
 #include "ast/Ident.h"
 #include "ast/Lit.h"
 #include "ast/Stmt.h"

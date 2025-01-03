@@ -72,9 +72,9 @@ struct WhileExpr {
 };
 
 struct PathExpr {
-    U<Path> path;
-    PathExpr() = default;
-    PathExpr(U<Path> path) : path(std::move(path)) {}
+  U<Path> path;
+  PathExpr() = default;
+  PathExpr(U<Path> path) : path(std::move(path)) {}
 };
 
 struct CallExpr {
@@ -85,16 +85,36 @@ struct CallExpr {
       : expr(std::move(expr)), params(std::move(params)) {}
 };
 
+struct BinaryExpr {
+  BinOp op;
+  U<Expr> first;
+  U<Expr> second;
+};
+
+struct AssignExpr {
+  U<Expr> first;
+  U<Expr> second;
+};
+
+struct AssignOpExpr {
+  BinOp op;
+  U<Expr> first;
+  U<Expr> second;
+};
+
 struct Expr {
   using ExprKind = std::variant<LitExpr, ExprExpr, LetExpr, BlockExpr,
-                                WhileExpr, IfExpr, LoopExpr, CallExpr, PathExpr>;
+                                WhileExpr, IfExpr, LoopExpr, CallExpr, PathExpr,
+                                BinaryExpr, AssignExpr, AssignOpExpr>;
   ExprKind kind;
   TS::CheckType type;
 
 public:
   Expr() : kind(), type(TS::CheckType::makeVar(TS::Type::MakeUnset())) {}
 
-  explicit Expr(ExprKind kind) : kind(std::move(kind)), type(TS::CheckType::makeVar(TS::Type::MakeUnset())) {}
+  explicit Expr(ExprKind kind)
+      : kind(std::move(kind)),
+        type(TS::CheckType::makeVar(TS::Type::MakeUnset())) {}
 
   static Expr makeCall(U<Expr> expr, std::vector<U<Expr>> params) {
     return Expr(CallExpr(std::move(expr), std::move(params)));
@@ -104,9 +124,7 @@ public:
   static Expr makeLet(U<Pat> pattern, U<Expr> expr) {
     return Expr(LetExpr(std::move(pattern), std::move(expr)));
   }
-  static Expr makePath(U<Path> path) {
-      return Expr(PathExpr(std::move(path)));
-  }
+  static Expr makePath(U<Path> path) { return Expr(PathExpr(std::move(path))); }
   static Expr makeIf(U<Expr> condition, U<Block> thenBlock) {
     return Expr(
         IfExpr(std::move(condition), std::move(thenBlock), std::nullopt));
@@ -128,6 +146,17 @@ public:
   static Expr makeBlock(U<Block> block) {
     return Expr(BlockExpr(std::move(block)));
   }
-};
+  static Expr makeBinary(BinOp op, U<Expr> first, U<Expr> second) {
+    return Expr(BinaryExpr(std::move(op), std::move(first), std::move(second)));
+  }
 
+  static Expr makeAssign(U<Expr> first, U<Expr> second) {
+    return Expr(AssignExpr(std::move(first), std::move(second)));
+  }
+
+  static Expr makeAssignOp(BinOp op, U<Expr> first, U<Expr> second) {
+    return Expr(
+        AssignOpExpr(std::move(op), std::move(first), std::move(second)));
+  }
+};
 } // namespace MRC::AST
