@@ -9,44 +9,39 @@
 
 void printAst(MRC::AST::Ast* ast) {
   MRC::AST::PrintVisitor printer;
-  for (auto &item : ast->items){
-    printer.visit_item(item);
+  for (auto &body: ast->bodies){
+    printer.visit_body(body);
   }
 }
 
 void type_check(MRC::AST::Ast *ast) {
     MRC::TS::TypeChecker typechecker;
-    for (auto &item : ast->items){
-      typechecker.visit_item(item);
+
+    try {
+        for (auto &body: ast->bodies){
+          typechecker.visit_body(body);
+        }
+        typechecker.context.print_context();
+    }catch(MRC::TS::TypeError err) {
+        std::cout << err.what() << std::endl;
     }
+
 }
 
 int main(int argc, char* argv[]) {
 
     // read options
     MRC::Driver driver{};
-    // driver.parse("let a = 30;");
-    // driver.parse("let a = 30u16;");
-    // driver.parse("let a = 30_u16;");
-    // driver.parse("let a = 30_u16;");
-    // driver.parse("fn main();");
-    // driver.parse("fn main(hello: i32);");
-    // driver.parse("fn main() -> i32;");
     auto method = R"(
     fn main() {
-        let b: u8 = 10;
+        let a = 3;
+        let b = 5;
+        let x: i64 = a + b;
+        let y: i64 = a;
     }
     )";
     driver.parse(method);
-    // driver.parse("let a;");
-    // driver.parse("let a = 30;");
-    // driver.parse("let a: i32;");
-    // driver.parse("let a: i32 = 32;");
-    try {
-        type_check(driver.ast());
-    }catch(MRC::TS::TypeError err) {
-        std::cout << err.what() << std::endl;
-    }
+    type_check(driver.ast());
 
     printAst(driver.ast());
 

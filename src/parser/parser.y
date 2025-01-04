@@ -141,12 +141,18 @@
 %%
 program
     : items         { }
-    | EOF          { }
+    | EOF           { }
     ;
 
 items
-    : item         { ast->insert(std::move(*$1)); }
-    | items item   { ast->insert(std::move(*$2)); }
+    : item         {
+        auto body = $1->lower();
+        ast->insert(std::move(body));
+    }
+    | items item   {
+        auto body = $2->lower();
+        ast->insert(std::move(body));
+    }
     ;
 
 statements
@@ -159,24 +165,24 @@ statements
     }
     | statement expr_without_block SEMI {
         $$.push_back(std::move($1));
-        auto semi = Stmt::makeSemi(std::move($2));
+        auto semi = Stmt::makeSemi(ast->getId(), std::move($2));
         $$.push_back(std::move(semi));
     }
     | statements statement expr_without_block SEMI {
         $$ = std::move($1);
         $$.push_back(std::move($2));
-        auto semi = Stmt::makeSemi(std::move($3));
+        auto semi = Stmt::makeSemi(ast->getId(), std::move($3));
         $$.push_back(std::move(semi));
     }
     | expr_without_block SEMI {
-        auto semi = Stmt::makeSemi(std::move($1));
+        auto semi = Stmt::makeSemi(ast->getId(), std::move($1));
         $$.push_back(std::move(semi));
     }
     ;
 
 item
     : FN identifier function {
-        $$ = MU<Item>(Item::makeFn(std::move($2), std::move($3)));
+        $$ = MU<Item>(Item::makeFn(ast->getId(), std::move($2), std::move($3)));
     }
     ;
 
@@ -217,14 +223,14 @@ block
 
 /* Statements */
 statement
-    : item              { $$ = Stmt::makeItem(std::move($1)); }
-    | LET local SEMI    { $$ = Stmt::makeLet(std::move($2)); }
-    | expr SEMI             { $$ = Stmt::makeExpr(std::move($1)); }
+    : item              { $$ = Stmt::makeItem(ast->getId(), std::move($1)); }
+    | LET local SEMI    { $$ = Stmt::makeLet(ast->getId(), std::move($2)); }
+    | expr SEMI             { $$ = Stmt::makeExpr(ast->getId(), std::move($1)); }
     ;
 
 local
-    : pattern typedecl.opt { $$ = MU<Local>(Local::makeDecl(std::move($1), std::move($2))); }
-    | pattern typedecl.opt init { $$ = MU<Local>(Local::makeInit(std::move($1), std::move($2), std::move($3))); }
+    : pattern typedecl.opt { $$ = MU<Local>(Local::makeDecl(ast->getId(), std::move($1), std::move($2))); }
+    | pattern typedecl.opt init { $$ = MU<Local>(Local::makeInit(ast->getId(), std::move($1), std::move($2), std::move($3))); }
     ;
 
 pattern
@@ -321,15 +327,15 @@ exprs
     ;
 
 expr_without_block
-  : literal_expr { $$ = MU<Expr>(Expr::makeLit(std::move($1))); }
-  | type_annotation { $$ = MU<Expr>(Expr::makePath(std::move($1))); }
-  | expr LPAREN exprs RPAREN { $$ = MU<Expr>(Expr::makeCall(std::move($1), std::move($3))); }
+  : literal_expr { $$ = MU<Expr>(Expr::makeLit(ast->getId(), std::move($1))); }
+  | type_annotation { $$ = MU<Expr>(Expr::makePath(ast->getId(), std::move($1))); }
+  | expr LPAREN exprs RPAREN { $$ = MU<Expr>(Expr::makeCall(ast->getId(), std::move($1), std::move($3))); }
   | operator_expr { $$ = std::move($1); }
   ;
 
 expr_with_block
   : block_expr {
-      $$ = MU<Expr>(Expr::makeBlock(std::move($1)));
+      $$ = MU<Expr>(Expr::makeBlock(ast->getId(), std::move($1)));
   }
   | loop_expr {
     $$ = std::move($1);
@@ -344,26 +350,26 @@ block_expr
 
 loop_expr
     : LOOP block_expr {
-        $$ = MU<Expr>(Expr::makeLoop(std::move($2)));
+        $$ = MU<Expr>(Expr::makeLoop(ast->getId(), std::move($2)));
     }
     | WHILE expr block_expr {
-        $$ = MU<Expr>(Expr::makeWhile(std::move($2), std::move($3)));
+        $$ = MU<Expr>(Expr::makeWhile(ast->getId(), std::move($2), std::move($3)));
     }
     ;
 
 literal_expr
-    : INTEGER_LITERAL           { $$ = MU<Lit>(Lit::makeInteger($1)); }
-    | FLOAT_LITERAL             { $$ = MU<Lit>(Lit::makeFloat($1)); }
-    | STR_LITERAL               { $$ = MU<Lit>(Lit::makeStr($1)); }
-    | BOOLEAN_LITERAL           { $$ = MU<Lit>(Lit::makeBoolean($1)); }
+    : INTEGER_LITERAL           { $$ = MU<Lit>(Lit::makeInteger(ast->getId(),$1)); }
+    | FLOAT_LITERAL             { $$ = MU<Lit>(Lit::makeFloat(ast->getId(),$1)); }
+    | STR_LITERAL               { $$ = MU<Lit>(Lit::makeStr(ast->getId(),$1)); }
+    | BOOLEAN_LITERAL           { $$ = MU<Lit>(Lit::makeBoolean(ast->getId(),$1)); }
     ;
 
 operator_expr
-    : expr PLUS expr        { $$ = MU<Expr>(Expr::makeBinary(BinOp::makeAdd(), std::move($1), std::move($3))); }
-    | expr MINUS expr       { $$ = MU<Expr>(Expr::makeBinary(BinOp::makeSub(), std::move($1), std::move($3))); }
-    | expr STAR expr        { $$ = MU<Expr>(Expr::makeBinary(BinOp::makeMul(), std::move($1), std::move($3))); }
-    | expr SLASH expr       { $$ = MU<Expr>(Expr::makeBinary(BinOp::makeDiv(), std::move($1), std::move($3))); }
-    | expr EQ expr          { $$ = MU<Expr>(Expr::makeAssign(std::move($1), std::move($3))); }
+    : expr PLUS expr        { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeAdd(), std::move($1), std::move($3))); }
+    | expr MINUS expr       { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeSub(), std::move($1), std::move($3))); }
+    | expr STAR expr        { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeMul(), std::move($1), std::move($3))); }
+    | expr SLASH expr       { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeDiv(), std::move($1), std::move($3))); }
+    | expr EQ expr          { $$ = MU<Expr>(Expr::makeAssign(ast->getId(), std::move($1), std::move($3))); }
     ;
 %%
 

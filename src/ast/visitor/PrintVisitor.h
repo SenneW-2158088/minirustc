@@ -28,9 +28,27 @@ private:
   };
 
 public:
+
+  void visit_body(Body &body) override {
+    
+    print_indent();
+    std::cout << "Body{\n";
+
+    print_indent();
+    std::cout << "id: " << body.id << std::endl;
+
+    {
+      ScopeGuard guard(indent_level);
+      Visitor::visit_body(body);
+    }
+  }
+
   void visit_stmt(Stmt &stmt) override {
     print_indent();
     std::cout << "Stmt {\n";
+
+    print_indent();
+    std::cout << "id: " << stmt.id << std::endl;
     {
       ScopeGuard guard(indent_level);
       Visitor::visit_stmt(stmt);
@@ -45,6 +63,9 @@ public:
 
     print_indent();
     std::cout << "Type:" << expr.type.to_string() << std::endl;
+
+    print_indent();
+    std::cout << "id: " << expr.id << std::endl;
 
     if(std::holds_alternative<BinaryExpr>(expr.kind)){
         auto &bin_expr = std::get<BinaryExpr>(expr.kind);
@@ -75,6 +96,10 @@ public:
     std::cout << "Lit {\n";
     print_indent();
     std::cout << "Type:" << lit.check_type.to_string() << std::endl;
+
+    print_indent();
+    std::cout << "id: " << lit.id << std::endl;
+
     {
       ScopeGuard guard(indent_level);
 
@@ -130,6 +155,9 @@ public:
     print_indent();
     std::cout << "Type:" << local.check_type.to_string() << std::endl;
 
+    print_indent();
+    std::cout << "id: " << local.id << std::endl;
+
     if(local.type) {
         print_indent();
         std::cout << "Type:" << local.check_type.to_string() << std::endl;
@@ -166,8 +194,10 @@ public:
 
   void visit_item(Item &item) override {
       print_indent();
-
       std::cout << "Item {\n";
+
+      print_indent();
+      std::cout << "id: " << item.id << std::endl;
       {
         ScopeGuard guard(indent_level);
         Visitor::visit_item(item);

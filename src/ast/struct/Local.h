@@ -24,10 +24,12 @@ struct Local {
   LocalKind kind;
   Opt<U<Type>> type;
   TS::CheckType check_type;
+  Id id;
 
 public:
-explicit Local(U<Pat> pat, Opt<U<Type>> type, LocalKind kind)
+explicit Local(Id id, U<Pat> pat, Opt<U<Type>> type, LocalKind kind)
     : kind(std::move(kind))
+    , id(id)
     , pat(std::move(pat))
     , type({})  // Initialize with empty optional first
     , check_type(TS::CheckType::makeVar(TS::Type::MakeUnset()))  // Initialize with default
@@ -39,15 +41,15 @@ explicit Local(U<Pat> pat, Opt<U<Type>> type, LocalKind kind)
     }
 }
 
-  static Local makeDecl(U<Pat> pat, Opt<U<Type>> type) {
-    return Local(std::move(pat), std::move(type), DeclLocal());
+  static Local makeDecl(Id id, U<Pat> pat, Opt<U<Type>> type) {
+    return Local(id, std::move(pat), std::move(type), DeclLocal());
   }
-  static Local makeInit(U<Pat> pat, Opt<U<Type>> type, U<Expr> expr) {
-    return Local(std::move(pat), std::move(type), InitLocal(std::move(expr)));
+  static Local makeInit(Id id, U<Pat> pat, Opt<U<Type>> type, U<Expr> expr) {
+    return Local(id, std::move(pat), std::move(type), InitLocal(std::move(expr)));
   }
-  static Local makeInitElse(U<Pat> pat, Opt<U<Type>> type, U<Expr> expr,
+  static Local makeInitElse(Id id, U<Pat> pat, Opt<U<Type>> type, U<Expr> expr,
                             U<Block> block) {
-    return Local(std::move(pat), std::move(type),
+    return Local(id, std::move(pat), std::move(type),
                  InitElseLocal(std::move(expr), std::move(block)));
   }
 };

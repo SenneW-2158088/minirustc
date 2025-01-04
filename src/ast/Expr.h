@@ -108,55 +108,56 @@ struct Expr {
                                 BinaryExpr, AssignExpr, AssignOpExpr>;
   ExprKind kind;
   TS::CheckType type;
+  Id id;
 
 public:
   Expr() : kind(), type(TS::CheckType::makeVar(TS::Type::MakeUnset())) {}
 
-  explicit Expr(ExprKind kind)
-      : kind(std::move(kind)),
-        type(TS::CheckType::makeVar(TS::Type::MakeUnset())) {}
+  explicit Expr(Id id, ExprKind kind)
+      : kind(std::move(kind))
+      , id(id)
+      , type(TS::CheckType::makeVar(TS::Type::MakeUnset())) {}
 
-  static Expr makeCall(U<Expr> expr, std::vector<U<Expr>> params) {
-    return Expr(CallExpr(std::move(expr), std::move(params)));
+  static Expr makeCall(Id id, U<Expr> expr, std::vector<U<Expr>> params) {
+    return Expr(id, CallExpr(std::move(expr), std::move(params)));
   }
-  static Expr makeLit(U<Lit> lit) { return Expr(LitExpr(std::move(lit))); }
-  static Expr makeExpr(U<Expr> expr) { return Expr(ExprExpr(std::move(expr))); }
-  static Expr makeLet(U<Pat> pattern, U<Expr> expr) {
-    return Expr(LetExpr(std::move(pattern), std::move(expr)));
+  static Expr makeLit(Id id, U<Lit> lit) { return Expr(id, LitExpr(std::move(lit))); }
+  static Expr makeExpr(Id id, U<Expr> expr) { return Expr(id, ExprExpr(std::move(expr))); }
+  static Expr makeLet(Id id, U<Pat> pattern, U<Expr> expr) {
+    return Expr(id, LetExpr(std::move(pattern), std::move(expr)));
   }
-  static Expr makePath(U<Path> path) { return Expr(PathExpr(std::move(path))); }
-  static Expr makeIf(U<Expr> condition, U<Block> thenBlock) {
-    return Expr(
+  static Expr makePath(Id id, U<Path> path) { return Expr(id, PathExpr(std::move(path))); }
+  static Expr makeIf(Id id, U<Expr> condition, U<Block> thenBlock) {
+    return Expr(id,
         IfExpr(std::move(condition), std::move(thenBlock), std::nullopt));
   }
 
-  static Expr makeIfElse(U<Expr> condition, U<Block> thenBlock,
+  static Expr makeIfElse(Id id, U<Expr> condition, U<Block> thenBlock,
                          U<Expr> elseExpr) {
-    return Expr(IfExpr(std::move(condition), std::move(thenBlock),
+    return Expr(id, IfExpr(std::move(condition), std::move(thenBlock),
                        std::move(elseExpr)));
   }
 
-  static Expr makeLoop(U<Block> block) {
-    return Expr(LoopExpr(std::move(block)));
+  static Expr makeLoop(Id id, U<Block> block) {
+    return Expr(id, LoopExpr(std::move(block)));
   }
 
-  static Expr makeWhile(U<Expr> condition, U<Block> block) {
-    return Expr(WhileExpr(std::move(condition), std::move(block)));
+  static Expr makeWhile(Id id, U<Expr> condition, U<Block> block) {
+    return Expr(id, WhileExpr(std::move(condition), std::move(block)));
   }
-  static Expr makeBlock(U<Block> block) {
-    return Expr(BlockExpr(std::move(block)));
+  static Expr makeBlock(Id id, U<Block> block) {
+    return Expr(id, BlockExpr(std::move(block)));
   }
-  static Expr makeBinary(BinOp op, U<Expr> first, U<Expr> second) {
-    return Expr(BinaryExpr(std::move(op), std::move(first), std::move(second)));
-  }
-
-  static Expr makeAssign(U<Expr> first, U<Expr> second) {
-    return Expr(AssignExpr(std::move(first), std::move(second)));
+  static Expr makeBinary(Id id, BinOp op, U<Expr> first, U<Expr> second) {
+    return Expr(id, BinaryExpr(std::move(op), std::move(first), std::move(second)));
   }
 
-  static Expr makeAssignOp(BinOp op, U<Expr> first, U<Expr> second) {
-    return Expr(
-        AssignOpExpr(std::move(op), std::move(first), std::move(second)));
+  static Expr makeAssign(Id id, U<Expr> first, U<Expr> second) {
+    return Expr(id, AssignExpr(std::move(first), std::move(second)));
+  }
+
+  static Expr makeAssignOp(Id id, BinOp op, U<Expr> first, U<Expr> second) {
+    return Expr(id, AssignOpExpr(std::move(op), std::move(first), std::move(second)));
   }
 };
 } // namespace MRC::AST

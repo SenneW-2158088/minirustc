@@ -45,18 +45,19 @@ struct Stmt {
   using StmtKind =
       std::variant<ExprStmt, LetStmt, EmptyStmt, ItemStmt, SemiStmt>;
   StmtKind kind{};
+  Id id;
 
 public:
   Stmt() = default;
-  Stmt(StmtKind kind) : kind(std::move(kind)) {}
+  Stmt(Id id, StmtKind kind) : id(id), kind(std::move(kind)) {}
 
-  static Stmt makeEmpty() { return Stmt(EmptyStmt()); }
-  static Stmt makeExpr(U<Expr> expr) { return Stmt(ExprStmt(std::move(expr))); }
-  static Stmt makeLet(U<Local> local) {
-    return Stmt(LetStmt(std::move(local)));
+  static Stmt makeEmpty(Id id) { return Stmt(id, EmptyStmt()); }
+  static Stmt makeExpr(Id id, U<Expr> expr) { return Stmt(id, ExprStmt(std::move(expr))); }
+  static Stmt makeLet(Id id, U<Local> local) {
+    return Stmt(id, LetStmt(std::move(local)));
   }
-  static Stmt makeItem(U<Item> item) { return Stmt(ItemStmt(std::move(item))); }
+  static Stmt makeItem(Id id, U<Item> item) { return Stmt(id, ItemStmt(std::move(item))); }
 
-  static Stmt makeSemi(U<Expr> expr) { return Stmt(SemiStmt(std::move(expr))); }
+  static Stmt makeSemi(Id id, U<Expr> expr) { return Stmt(id, SemiStmt(std::move(expr))); }
 };
 } // namespace MRC::AST

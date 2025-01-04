@@ -161,6 +161,16 @@ void walk_fn(Visitor *visitor, Fn &fn) {
    }
 }
 
+void walk_body(Visitor *visitor, Body &body) {
+
+  for (auto &param : body.params) {
+    visitor->visit_pat(*param.pat);
+    visitor->visit_type(*param.type);
+  }
+
+  visitor->visit_expr(*body.value);
+}
+
 void Visitor::visit_stmt(Stmt &stmt) { walk_stmt(this, stmt); }
 void Visitor::visit_expr(Expr &expr) { walk_expr(this, expr); }
 void Visitor::visit_lit(Lit &lit) { walk_lit(this, lit); }
@@ -173,4 +183,5 @@ void Visitor::visit_path(Path &path) { walk_path(this, path); }
 void Visitor::visit_item(Item &item) { walk_item(this, item); }
 void Visitor::visit_symbol(Symbol &symbol) { return; }
 void Visitor::visit_fn(Fn &fn) { walk_fn(this, fn); }
+void Visitor::visit_body(Body &body) { walk_body(this, body); }
 } // namespace MRC::AST

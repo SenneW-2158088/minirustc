@@ -128,17 +128,9 @@ struct CheckType {
       return std::visit(
         overloaded{
             [&](VarType &val, VarType &other_val) -> bool {
-              if (std::holds_alternative<UnsetType>(val.type.kind)) {
-                val.type = std::move(other_val.type);
-                return true;
-              }
               return val.type.unionize(other_val.type);
             },
             [&](VarType &val, ConcreteType &other_val) -> bool {
-              if (std::holds_alternative<UnsetType>(val.type.kind)) {
-                this->kind = ConcreteType(std::move(other_val.type));
-                return true;
-              }
               if(val.type.unionize(other_val.type)) {
                 this->kind = ConcreteType(std::move(other_val.type));
                 return true;
@@ -146,9 +138,6 @@ struct CheckType {
               return false;
             },
             [&](ConcreteType &val, VarType &other_val) -> bool {
-              if (std::holds_alternative<UnsetType>(other_val.type.kind)) {
-                  return true;
-              }
               if(other_val.type.unionize(val.type)) {
                 other.kind = ConcreteType(std::move(val.type));
                 return true;
@@ -156,20 +145,20 @@ struct CheckType {
               return false;
             },
             [&](ConcreteType &val, ConcreteType &other_val) -> bool {
-              return val.type.unionize(other_val.type);
+              return val.type.equals(other_val.type);
             }},
         this->kind, other.kind);
   }
   std::string to_string() {
-    return std::visit(overloaded{[&](VarType &val) -> std::string {
-                                   return "varType:" + val.type.to_string();
-                                 },
-                                 [&](ConcreteType &val) -> std::string {
-                                   return "ConcreteType:" +
-                                          val.type.to_string();
-                                 }},
-                      this->kind);
+    return std::visit(overloaded{
+      [&](VarType &val) -> std::string {
+       return "varType:" + val.type.to_string();
+      },
+      [&](ConcreteType &val) -> std::string {
+        return "ConcreteType:" +
+               val.type.to_string();
+      }},
+      this->kind);
   }
 };
-
 } // namespace MRC::TS
