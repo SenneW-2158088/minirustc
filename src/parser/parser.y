@@ -146,11 +146,11 @@ program
 
 items
     : item         {
-        auto body = $1->lower();
+        auto body = $1->lower(ast->getId());
         ast->insert(std::move(body));
     }
     | items item   {
-        auto body = $2->lower();
+        auto body = $2->lower(ast->getId());
         ast->insert(std::move(body));
     }
     ;

@@ -2,6 +2,7 @@
 
 #include "ast/Body.h"
 #include "ast/Expr.h"
+#include "ast/struct/Block.h"
 #include "ast/struct/Local.h"
 #include "ast/struct/Pat.h"
 #include "ast/visitor/Visitor.h"
@@ -62,12 +63,14 @@ struct TypeContext {
   // Merge ranks
   void merge(AST::Id left, AST::Id right) {
     int left_rank = mapping[left];
-    mapping[right] = left;
+    mapping[right] = left_rank;
   }
 
   void unionize(AST::Id left, AST::Id right) {
     auto *left_type = resolve(left);
     auto *right_type = resolve(right);
+
+    std::cout << "unionize " << left << "->" << left_type->to_string() << " with " << right << "->" << right_type->to_string() << std::endl;
 
     // If types are equal merge ranks
     if(left_type->equals(*right_type)) {
@@ -107,8 +110,7 @@ struct TypeContext {
   void print_context() {
     std::cout << "Ranks: " << std::endl;
     for(auto const &[key, val] : ranks) {
-      auto type = resolve(key);
-      std::cout << key << " -> " << val.kind.index() << " -> " << type->to_string() << std::endl;
+      std::cout << key << " -> " << val.kind.index() << std::endl;
     }
     std::cout << "Mappings: " << std::endl;
     for(auto const &[key, val] : mapping) {
@@ -156,6 +158,7 @@ public:
   void visit_item(AST::Item &item) override {
     push_scope();
     Visitor::visit_item(item);
+    std::cout << "visit item called" << std::endl;
 
     std::visit(overloaded{[&](AST::FnItem &fn) {
      if (fn.fn->type.has_value()) {
@@ -185,8 +188,7 @@ public:
                 context.unionize(expr.id, let.expr->id);
               }
             },
-            [&](AST::BlockExpr &block) {
-            },
+            [&](AST::BlockExpr &block) { },
             [&](AST::WhileExpr &while_expr) {},
             [&](AST::LoopExpr &loop) { },
             [&](AST::IfExpr &if_expr) {
@@ -245,6 +247,12 @@ public:
     context.insert(lit.id, std::move(lit.check_type));
   }
 
+  void visit_block(AST::Block &block) override {
+    push_scope();
+    Visitor::visit_block(block);
+    pop_scope();
+  }
+
   void visit_local(AST::Local &local) override {
     Visitor::visit_local(local);
 
@@ -257,18 +265,19 @@ public:
         local.check_type = CheckType::makeConcrete(local.type.value()->to_type());
       }
 
-      std::visit(overloaded{[&](AST::InitLocal &init) {
-                              insert_symbol(pat.identifier.symbol, local.id, std::move(local.check_type));
-                              context.unionize(local.id, init.expr->id);
-                            },
-                            [&](AST::InitElseLocal &init) {
-                              insert_symbol(pat.identifier.symbol, local.id, std::move(local.check_type));
-                              context.unionize(local.id, init.expr->id);
-                            },
-                            [&](AST::DeclLocal &decl) {
-                              insert_symbol(pat.identifier.symbol, local.id, std::move(local.check_type));
-                            }},
-                 local.kind);
+      std::visit(overloaded{
+        [&](AST::InitLocal &init) {
+          insert_symbol(pat.identifier.symbol, local.id, std::move(local.check_type));
+          context.unionize(local.id, init.expr->id);
+        },
+        [&](AST::InitElseLocal &init) {
+          insert_symbol(pat.identifier.symbol, local.id, std::move(local.check_type));
+          context.unionize(local.id, init.expr->id);
+        },
+        [&](AST::DeclLocal &decl) {
+          insert_symbol(pat.identifier.symbol, local.id, std::move(local.check_type));
+        }},
+     local.kind);
     }
   }
 };
