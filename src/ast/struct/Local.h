@@ -32,7 +32,7 @@ explicit Local(Id id, U<Pat> pat, Opt<U<Type>> type, LocalKind kind)
     , id(id)
     , pat(std::move(pat))
     , type({})  // Initialize with empty optional first
-    , check_type(TS::CheckType::makeVar(TS::Type::MakeUnset()))  // Initialize with default
+    , check_type(TS::CheckType::makeVar(TS::Type::makeUnset()))  // Initialize with default
 {
     if (type.has_value()) {
         auto concrete_type = type.value()->to_type();

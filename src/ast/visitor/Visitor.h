@@ -35,5 +35,6 @@ public:
   virtual void visit_symbol(Symbol &symbol);
   virtual void visit_fn(Fn &fn);
   virtual void visit_body(Body &fn);
+  virtual void visit_param(Param& param);
 };
 } // namespace MRC::AST

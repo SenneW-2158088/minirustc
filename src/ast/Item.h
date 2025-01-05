@@ -25,21 +25,5 @@ struct Item {
   static Item makeFn(Id id, Ident ident, U<Fn> fn) {
     return Item(id, std::move(ident), FnItem(std::move(fn)));
   }
-
-  Body lower(Id id) {
-    return std::visit(
-        overloaded{[&](FnItem &fn_item) -> Body {
-          if (fn_item.fn->body) {
-            auto block_expr = MU<Expr>(Expr::makeBlock(this->id, std::move(fn_item.fn->body.value())));
-            return Body(id, std::move(fn_item.fn->params), std::move(block_expr)); }
-          else {
-            auto empty_block = std::make_unique<Block>();
-            auto block_expr = MU<Expr>(Expr::makeBlock(this->id, std::move(empty_block)));
-            return Body(id, std::move(fn_item.fn->params), std::move(block_expr));
-          }
-        }},
-        kind);
-  }
-
 };
 } // namespace MRC::AST

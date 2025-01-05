@@ -91,7 +91,7 @@ struct Type {
 
   static Type makeBool() { return Type(BoolType{}); }
 
-  static Type MakeUnset() { return Type(UnsetType{}); }
+  static Type makeUnset() { return Type(UnsetType{}); }
 
   static Type makeString() { return Type(StringType{}); }
 
@@ -127,6 +127,16 @@ struct Type {
                        left = right;
                        return true;
                      }
+                   },
+                   [&](FunctionType &left, FunctionType &right) -> bool {
+                     if(left.params.size() != right.params.size()) return false;
+                     if(!left.return_type->equals(*right.return_type)) return false;
+
+                     for(int i = 0; i < left.params.size(); ++i) {
+                       if(!left.params[i]->unionize(*right.params[i])) return false;
+                     }
+
+                     return true;
                    },
                    [&](auto &left, UnsetType &right) -> bool {
                      return true;
@@ -181,8 +191,8 @@ struct CheckType {
   }
 
   bool unionize(CheckType &other) {
-    std::cout << "Unionize " << this->to_string() << " with "
-              << other.to_string() << std::endl;
+    // std::cout << "Unionize " << this->to_string() << " with "
+    //           << other.to_string() << std::endl;
     return std::visit(
         overloaded{[&](VarType &val, VarType &other_val) -> bool {
                      if (val.type.unionize(other_val.type)) {

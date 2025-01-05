@@ -148,12 +148,10 @@ program
 
 items
     : item         {
-        auto body = $1->lower(ast->getId());
-        ast->insert(std::move(body));
+        ast->insert(std::move(*$1));
     }
     | items item   {
-        auto body = $2->lower(ast->getId());
-        ast->insert(std::move(body));
+        ast->insert(std::move(*$2));
     }
     ;
 
@@ -198,7 +196,7 @@ parameters.opt
 
 parameter
     : pattern COLON type {
-        $$ = Param(std::move($3), std::move($1));
+        $$ = Param(ast->getId(), std::move($3), std::move($1));
     }
     ;
 

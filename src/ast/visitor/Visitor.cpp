@@ -154,8 +154,7 @@ void walk_item(Visitor *visitor, Item &item) {
 void walk_fn(Visitor *visitor, Fn &fn) {
     // Parse params
     for(Param &param : fn.params)  {
-      visitor->visit_type(*param.type);
-      visitor->visit_pat(*param.pat);
+      visitor->visit_param(param);
    }
 
    // parse body
@@ -192,4 +191,9 @@ void Visitor::visit_item(Item &item) { walk_item(this, item); }
 void Visitor::visit_symbol(Symbol &symbol) { return; }
 void Visitor::visit_fn(Fn &fn) { walk_fn(this, fn); }
 void Visitor::visit_body(Body &body) { walk_body(this, body); }
-} // namespace MRC::AST
+void Visitor::visit_param(Param &param) {
+  walk_pat(this, *param.pat);
+  walk_type(this, *param.type);
+}
+}
+// namespace MRC::AST

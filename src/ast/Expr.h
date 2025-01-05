@@ -120,12 +120,12 @@ struct Expr {
   Id id;
 
 public:
-  Expr() : kind(), type(TS::CheckType::makeVar(TS::Type::MakeUnset())) {}
+  Expr() : kind(), type(TS::CheckType::makeVar(TS::Type::makeUnset())) {}
 
   explicit Expr(Id id, ExprKind kind)
       : kind(std::move(kind))
       , id(id)
-      , type(TS::CheckType::makeVar(TS::Type::MakeUnset())) {}
+      , type(TS::CheckType::makeVar(TS::Type::makeUnset())) {}
 
   static Expr makeCall(Id id, U<Expr> expr, std::vector<U<Expr>> params) {
     return Expr(id, CallExpr(std::move(expr), std::move(params)));

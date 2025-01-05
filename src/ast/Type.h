@@ -46,7 +46,7 @@ public:
 
   MRC::TS::Type to_type() const {
     return std::visit(overloaded{[&](const InferType &) -> MRC::TS::Type {
-                                   return MRC::TS::Type::MakeUnset();
+                                   return MRC::TS::Type::makeUnset();
                                  },
                                  [&](const PathType &val) -> MRC::TS::Type {
                                    auto path = to_string();
@@ -85,7 +85,7 @@ public:
                                    if (path == "str")
                                      return MRC::TS::Type::makeString();
 
-                                   return MRC::TS::Type::MakeUnset();
+                                   return MRC::TS::Type::makeUnset();
                                  }},
                       kind);
   }

@@ -5,6 +5,7 @@ typedef int Id;
 struct Ast;
 struct BinOp;
 struct Stmt;
+struct Param;
 struct Expr;
 struct Body;
 struct Iden;
