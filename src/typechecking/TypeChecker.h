@@ -54,9 +54,12 @@ struct TypeContext {
 
 
   void insert(AST::Id id, CheckType type) {
+    if(mapping.find(id) != mapping.end()) {
+      throw TypeError("Node with id " + std::to_string(id) + " is already inserted");
+    }
     int rank = rank_counter++;
     mapping.emplace(id, rank);
-    ranks.emplace(rank, std::move(type));
+    ranks.emplace(rank, type);
     std::cout << "Inserted " << id << " as " << type.to_string() << " with rank " << rank << std::endl;
   }
 
@@ -64,6 +67,8 @@ struct TypeContext {
   void merge(AST::Id left, AST::Id right) {
     int left_rank = mapping[left];
     mapping[right] = left_rank;
+
+    std::cout << right << " points to rank " << left_rank << " -> " << resolve(left)->to_string() << std::endl;
   }
 
   void unionize(AST::Id left, AST::Id right) {
@@ -123,8 +128,8 @@ struct TypeContext {
 class TypeChecker : public AST::Visitor {
 private:
   void insert_symbol(std::string symbol, AST::Id id, CheckType type) {
-    scopes.back().insert(symbol, id, std::move(type));
-    context.insert(id, std::move(type));
+    scopes.back().insert(symbol, id, type);
+    context.insert(id, type);
   }
 
   AST::Id lookup_symbol(std::string symbol) {
@@ -163,7 +168,7 @@ public:
     std::visit(overloaded{[&](AST::FnItem &fn) {
      if (fn.fn->type.has_value()) {
        auto t = fn.fn->type.value()->to_type();
-       context.insert(item.id, CheckType::makeConcrete(std::move(t)));
+       context.insert(item.id, CheckType::makeConcrete(t));
      } else {
        context.insert(item.id, CheckType::makeVar(Type::makeVoid()));
      }
@@ -174,7 +179,7 @@ public:
   void visit_expr(AST::Expr &expr) override {
     Visitor::visit_expr(expr);
 
-    context.insert(expr.id, std::move(expr.type));
+    context.insert(expr.id, expr.type);
 
     std::visit(
         overloaded{
@@ -187,19 +192,33 @@ public:
                 context.unionize(expr.id, let.expr->id);
               }
             },
-            [&](AST::BlockExpr &block) { },
-            [&](AST::WhileExpr &while_expr) {},
-            [&](AST::LoopExpr &loop) { },
+            [&](AST::BlockExpr &block) {
+              auto b_expr = block.block->expr();
+              if(b_expr.has_value()) {
+                context.unionize(expr.id, b_expr.value()->id);
+              }
+            },
+            [&](AST::WhileExpr &while_expr) {
+              context.unionize(expr.id, while_expr.expr->id);
+
+              auto b_expr = while_expr.block->expr();
+              if(b_expr.has_value()) {
+                context.unionize(expr.id, b_expr.value()->id);
+              }
+            },
+            [&](AST::LoopExpr &loop) {
+              auto b_expr = loop.block->expr();
+              if(b_expr.has_value()) {
+                context.unionize(expr.id, b_expr.value()->id);
+              }
+            },
             [&](AST::IfExpr &if_expr) {
-              context.insert(if_expr.expr->id, std::move(if_expr.expr->type));
               context.unionize(expr.id, if_expr.expr->id);
             },
             [&](AST::ExprExpr &expr_expr) {
-              context.insert(expr_expr.expr->id, std::move(expr_expr.expr->type));
               context.unionize(expr.id, expr_expr.expr->id);
             },
             [&](AST::CallExpr &call) {
-              context.insert(call.expr->id, std::move(call.expr->type));
               context.unionize(expr.id, call.expr->id);
             },
             [&](AST::PathExpr &path) {
@@ -207,29 +226,25 @@ public:
               context.unionize(expr.id, id);
             },   
             [&](AST::ReturnExpr& val) {
+              if(val.expr.has_value()) {
+                context.unionize(expr.id, val.expr.value()->id);
+              }
             },   
-            [&](AST::ContinueExpr &val) {
-            },   
+            [&](AST::ContinueExpr &val) { },   
             [&](AST::BreakExpr &val) {
+              if(val.expr.has_value()) {
+                context.unionize(expr.id, val.expr.value()->id);
+              }
             },   
             [&](AST::BinaryExpr &bin) {
-                context.insert(bin.first->id, std::move(bin.first->type));
-                context.insert(bin.second->id, std::move(bin.second->type));
-
                 context.unionize(bin.first->id, bin.second->id);
                 context.unionize(expr.id, bin.first->id);
             }, 
             [&](AST::AssignExpr &assign) {
-                context.insert(assign.first->id, std::move(assign.first->type));
-                context.insert(assign.second->id, std::move(assign.second->type));
-
                 context.unionize(assign.first->id, assign.second->id);
                 context.unionize(expr.id, assign.first->id);
             }, 
             [&](AST::AssignOpExpr &assign_op) {
-                context.insert(assign_op.first->id, std::move(assign_op.first->type));
-                context.insert(assign_op.second->id, std::move(assign_op.second->type));
-
                 context.unionize(assign_op.first->id, assign_op.second->id);
                 context.unionize(expr.id, assign_op.first->id);
             },
@@ -249,7 +264,7 @@ public:
   }
 
   void visit_lit(AST::Lit &lit) override {
-    context.insert(lit.id, std::move(lit.check_type));
+    context.insert(lit.id, lit.check_type);
   }
 
   void visit_block(AST::Block &block) override {
@@ -272,15 +287,15 @@ public:
 
       std::visit(overloaded{
         [&](AST::InitLocal &init) {
-          insert_symbol(pat.identifier.symbol, local.id, std::move(local.check_type));
+          insert_symbol(pat.identifier.symbol, local.id, local.check_type);
           context.unionize(local.id, init.expr->id);
         },
         [&](AST::InitElseLocal &init) {
-          insert_symbol(pat.identifier.symbol, local.id, std::move(local.check_type));
+          insert_symbol(pat.identifier.symbol, local.id, local.check_type);
           context.unionize(local.id, init.expr->id);
         },
         [&](AST::DeclLocal &decl) {
-          insert_symbol(pat.identifier.symbol, local.id, std::move(local.check_type));
+          insert_symbol(pat.identifier.symbol, local.id, local.check_type);
         }},
      local.kind);
     }

@@ -37,9 +37,7 @@ int main(int argc, char* argv[]) {
         let a = 3;
         let b = 5;
         let x: i64 = a + b;
-        let y: i64 = a;
-
-        return;
+        let c: i32 = a;
     }
     )";
     driver.parse(method);

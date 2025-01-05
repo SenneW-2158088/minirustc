@@ -100,6 +100,7 @@
 %type <U<AST::Expr>>                loop_expr
 %type <U<AST::Expr>>                call_expr
 %type <U<AST::Expr>>                operator_expr
+%type <U<AST::Expr>>                if_expr
 
 /* -- Identifier -- */
 %type <AST::Ident>                  identifier
@@ -157,27 +158,13 @@ items
     ;
 
 statements
-    : statement {
+    : 
+    | statement {
         $$.push_back(std::move($1));
     }
     | statements statement {
         $$ = std::move($1);
         $$.push_back(std::move($2));
-    }
-    | statement expr_without_block SEMI {
-        $$.push_back(std::move($1));
-        auto semi = Stmt::makeSemi(ast->getId(), std::move($2));
-        $$.push_back(std::move(semi));
-    }
-    | statements statement expr_without_block SEMI {
-        $$ = std::move($1);
-        $$.push_back(std::move($2));
-        auto semi = Stmt::makeSemi(ast->getId(), std::move($3));
-        $$.push_back(std::move(semi));
-    }
-    | expr_without_block SEMI {
-        auto semi = Stmt::makeSemi(ast->getId(), std::move($1));
-        $$.push_back(std::move(semi));
     }
     ;
 
@@ -224,9 +211,10 @@ block
 
 /* Statements */
 statement
-    : item              { $$ = Stmt::makeItem(ast->getId(), std::move($1)); }
-    | LET local SEMI    { $$ = Stmt::makeLet(ast->getId(), std::move($2)); }
-    | expr SEMI             { $$ = Stmt::makeExpr(ast->getId(), std::move($1)); }
+    : item                    { $$ = Stmt::makeItem(ast->getId(), std::move($1)); }
+    | LET local SEMI          { $$ = Stmt::makeLet(ast->getId(), std::move($2)); }
+    | expr_with_block         { $$ = Stmt::makeExpr(ast->getId(), std::move($1)); }
+    | expr_without_block SEMI { $$ = Stmt::makeExpr(ast->getId(), std::move($1)); }
     ;
 
 local
@@ -349,6 +337,7 @@ expr_with_block
   | loop_expr {
     $$ = std::move($1);
     }
+  | if_expr { $$ = std::move($1); }
   ;
 
 block_expr
@@ -356,6 +345,10 @@ block_expr
       $$ = MU<Block>(Block(std::move($2)));
   }
   ;
+
+if_expr
+    : IF expr block_expr { $$ = MU<Expr>(Expr::makeIf(ast->getId(), std::move($2), std::move($3))); }
+    ;
 
 loop_expr
     : LOOP block_expr {
@@ -374,11 +367,17 @@ literal_expr
     ;
 
 operator_expr
-    : expr PLUS expr        { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeAdd(), std::move($1), std::move($3))); }
-    | expr MINUS expr       { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeSub(), std::move($1), std::move($3))); }
-    | expr STAR expr        { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeMul(), std::move($1), std::move($3))); }
-    | expr SLASH expr       { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeDiv(), std::move($1), std::move($3))); }
-    | expr EQ expr          { $$ = MU<Expr>(Expr::makeAssign(ast->getId(), std::move($1), std::move($3))); }
+    : expr PLUS expr            { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeAdd(), std::move($1), std::move($3))); }
+    | expr MINUS expr           { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeSub(), std::move($1), std::move($3))); }
+    | expr STAR expr            { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeMul(), std::move($1), std::move($3))); }
+    | expr SLASH expr           { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeDiv(), std::move($1), std::move($3))); }
+    | expr EQ expr              { $$ = MU<Expr>(Expr::makeAssign(ast->getId(), std::move($1), std::move($3))); }
+
+    | expr EQEQ expr            { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeEq(), std::move($1), std::move($3))); }
+    | expr GT expr              { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeGt(), std::move($1), std::move($3))); }
+    | expr LT expr              { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeLt(), std::move($1), std::move($3))); }
+    | expr GTEQ expr            { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeGe(), std::move($1), std::move($3))); }
+    | expr LTEQ expr            { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeLe(), std::move($1), std::move($3))); }
     ;
 %%
 

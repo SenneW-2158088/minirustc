@@ -42,6 +42,7 @@ FLOAT_SUFFIX    (f32|f64)
 
 %%
 
+
 %{
     #undef YY_USER_ACTION
     #define YY_USER_ACTION  \
@@ -51,6 +52,7 @@ FLOAT_SUFFIX    (f32|f64)
     using Token = MRC::Parser::token_type;
 
 %}
+
 
 "+"         { return MRC::Token(yytext, "", Token::TOKEN_PLUS, m_driver.location); }
 "-"         { return MRC::Token(yytext, "", Token::TOKEN_MINUS, m_driver.location); }

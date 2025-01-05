@@ -24,6 +24,10 @@ public:
   bool parse(std::istream &input);
 
   AST::Ast* ast() { return _ast.get(); }
-  void update_location(Parser::location_type location) { std::cout << "update location" << std::endl; };
+  void update_location(unsigned int line, unsigned int col) {
+      location.begin.line = line;
+      location.begin.column = col;
+      location.end = location.begin;
+  }
 };
 } // namespace MRC
