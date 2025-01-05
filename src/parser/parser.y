@@ -90,6 +90,7 @@
 
 /* -- Expressions -- */
 %type <U<AST::Expr>>                expr
+%type <Opt<U<AST::Expr>>>           expr.opt
 %type <std::vector<U<AST::Expr>>>   exprs
 %type <U<AST::Expr>>                expr_without_block
 %type <U<AST::Expr>>                expr_with_block
@@ -317,6 +318,11 @@ expr
   | expr_with_block { $$ = std::move($1); }
   ;
 
+expr.opt
+    : { $$ = std::nullopt; }
+    | expr { $$ = std::move($1); }
+    ;
+
 exprs
     :
     | expr { $$.push_back(std::move($1)); }
@@ -331,6 +337,9 @@ expr_without_block
   | type_annotation { $$ = MU<Expr>(Expr::makePath(ast->getId(), std::move($1))); }
   | expr LPAREN exprs RPAREN { $$ = MU<Expr>(Expr::makeCall(ast->getId(), std::move($1), std::move($3))); }
   | operator_expr { $$ = std::move($1); }
+  | BREAK expr.opt    { $$ = MU<Expr>(Expr::makeBreak(ast->getId(), std::move($2))); }
+  | CONTINUE      { $$ = MU<Expr>(Expr::makeContinue(ast->getId())); }
+  | RETURN expr.opt   { $$ = MU<Expr>(Expr::makeReturn(ast->getId(), std::move($2))); }
   ;
 
 expr_with_block

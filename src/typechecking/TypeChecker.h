@@ -167,8 +167,7 @@ public:
      } else {
        context.insert(item.id, CheckType::makeVar(Type::makeVoid()));
      }
-   }},
-   item.kind);
+    }}, item.kind);
     pop_scope();
   }
 
@@ -206,6 +205,12 @@ public:
             [&](AST::PathExpr &path) {
               auto id = lookup_symbol(path.path->to_string());
               context.unionize(expr.id, id);
+            },   
+            [&](AST::ReturnExpr& val) {
+            },   
+            [&](AST::ContinueExpr &val) {
+            },   
+            [&](AST::BreakExpr &val) {
             },   
             [&](AST::BinaryExpr &bin) {
                 context.insert(bin.first->id, std::move(bin.first->type));

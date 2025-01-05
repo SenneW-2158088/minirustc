@@ -38,6 +38,8 @@ int main(int argc, char* argv[]) {
         let b = 5;
         let x: i64 = a + b;
         let y: i64 = a;
+
+        return;
     }
     )";
     driver.parse(method);

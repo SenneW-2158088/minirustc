@@ -4,8 +4,6 @@
 #include <vector>
 
 #include "ast/prelude.h"
-#include "tst/Type.h"
-#include "tst/tst.h"
 #include "typechecking/Type.h"
 #include "util/util.h"
 
@@ -102,10 +100,21 @@ struct AssignOpExpr {
   U<Expr> second;
 };
 
+struct ContinueExpr{};
+
+struct BreakExpr{
+  Opt<U<Expr>> expr;
+};
+
+struct ReturnExpr{
+  Opt<U<Expr>> expr;
+};
+
 struct Expr {
   using ExprKind = std::variant<LitExpr, ExprExpr, LetExpr, BlockExpr,
                                 WhileExpr, IfExpr, LoopExpr, CallExpr, PathExpr,
-                                BinaryExpr, AssignExpr, AssignOpExpr>;
+                                BinaryExpr, AssignExpr, AssignOpExpr,
+                                BreakExpr, ReturnExpr, ContinueExpr>;
   ExprKind kind;
   TS::CheckType type;
   Id id;
@@ -158,6 +167,18 @@ public:
 
   static Expr makeAssignOp(Id id, BinOp op, U<Expr> first, U<Expr> second) {
     return Expr(id, AssignOpExpr(std::move(op), std::move(first), std::move(second)));
+  }
+
+  static Expr makeBreak(Id id, Opt<U<Expr>> expr) {
+    return Expr(id, BreakExpr(std::move(expr)));
+  }
+
+  static Expr makeReturn(Id id, Opt<U<Expr>> expr) {
+    return Expr(id, ReturnExpr(std::move(expr)));
+  }
+
+  static Expr makeContinue(Id id) {
+    return Expr(id, ContinueExpr());
   }
 };
 } // namespace MRC::AST

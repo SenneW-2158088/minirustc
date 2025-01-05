@@ -12,11 +12,6 @@ struct FnItem {
   FnItem(U<Fn> fn) : fn(std::move(fn)) {}
 };
 
-// To be supported later
-// Enum
-// Struct
-// Const
-
 struct Item {
   using ItemKind = std::variant<FnItem>;
   Ident ident;

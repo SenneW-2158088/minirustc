@@ -45,6 +45,17 @@ void walk_expr(Visitor *visitor, Expr &expr) {
                      }
                  },
                  [&visitor](PathExpr &val) { visitor->visit_path(*val.path); },
+                 [&visitor](BreakExpr &val) {
+                   if(val.expr.has_value()){
+                    visitor->visit_expr(*val.expr.value());
+                   }
+                 },
+                 [&visitor](ReturnExpr &val) {
+                   if(val.expr.has_value()){
+                    visitor->visit_expr(*val.expr.value());
+                   }
+                 },
+                 [&visitor](ContinueExpr &val) {},
                  [&visitor](LoopExpr &val) { visitor->visit_block(*val.block); },
                  [&visitor](BinaryExpr &val) {
                      visitor->visit_expr(*val.first);
