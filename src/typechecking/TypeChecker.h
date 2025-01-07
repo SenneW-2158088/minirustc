@@ -69,29 +69,35 @@ struct TypeContext {
     int rank = rank_counter++;
     mapping.emplace(id, rank);
     ranks.emplace(rank, type);
-    std::cout << "Inserted " << id << " as " << type.to_string()
-              << " with rank " << rank << std::endl;
+    // std::cout << "Inserted " << id << " as " << type.to_string()
+    //           << " with rank " << rank << std::endl;
   }
 
   // Merge ranks
   void merge(AST::Id left, AST::Id right) {
     int left_rank = mapping[left];
+    int right_rank = mapping[right];
     mapping[right] = left_rank;
 
-    std::cout << right << " points to rank " << left_rank << " -> "
-              << resolve(left)->to_string() << std::endl;
+    for(auto &[id, rank] : mapping) {
+      if (rank == right_rank) rank = left_rank;
+    }
+
+    // std::cout << right << " points to rank " << left_rank << " -> "
+    //           << resolve(left)->to_string() << std::endl;
   }
 
   void unionize(AST::Id left, AST::Id right) {
     auto *left_type = resolve(left);
     auto *right_type = resolve(right);
 
-    std::cout << "unionize " << left << "->" << left_type->to_string()
-              << " with " << right << "->" << right_type->to_string()
-              << std::endl;
+    // std::cout << "unionize " << left << "->" << left_type->to_string()
+    //           << " with " << right << "->" << right_type->to_string()
+    //           << std::endl;
 
     // If types are equal merge ranks
     if (left_type->equals(*right_type)) {
+      // std::cout << "set " << right << ":" << right_type->to_string() << " to " << left << ":" << left_type->to_string() << std::endl;
       merge(left, right);
       return;
     }
@@ -99,11 +105,13 @@ struct TypeContext {
     // Try to unify types
     if (left_type->unionize(*right_type)) {
       merge(left, right);
+      // std::cout << "set " << right << ":" << right_type->to_string() << " to " << left << ":" << left_type->to_string() << std::endl;
       return;
     }
 
     if (right_type->unionize(*left_type)) {
       merge(right, left);
+      // std::cout << "set " << left << ":" << left_type->to_string() << " to " << right << ":" << right_type ->to_string() << std::endl;
       return;
     }
 
@@ -158,6 +166,7 @@ private:
   }
 
   AST::Id lookup_symbol(const std::string &symbol) {
+    std::cout << "lookup up symbol " << symbol << std::endl;
     for (auto it = scopes.rbegin(); it != scopes.rend(); ++it) {
       if (auto id = find_symbol_in_scope(symbol, *it)) {
         return *id;
@@ -167,7 +176,10 @@ private:
     throw TypeError("Symbol '" + symbol + "' is not defined in current scope");
   }
 
-  void push_scope() { scopes.push_back(Scope()); }
+  void push_scope() {
+    scopes.push_back(Scope());
+  }
+
   void pop_scope() {
     scopes.back().print_scope();
     scopes.pop_back();
@@ -176,33 +188,28 @@ private:
 public:
   TypeContext context;
   std::vector<Scope> scopes;
+  int scope_index = 0;
   TypeChecker() : context() { push_scope(); }
   ~TypeChecker() { pop_scope(); }
 
-  void visit_body(AST::Body &body) override {
-    push_scope();
-    Visitor::visit_body(body);
-
-    context.insert(body.id, CheckType::makeVar(Type::makeUnset()));
-    context.unionize(body.id, body.value->id);
-    pop_scope();
-  }
-
   void visit_item(AST::Item &item) override {
-    std::cout << "visit item called" << std::endl;
+    push_scope();
 
     Visitor::visit_item(item);
 
     std::visit(overloaded{[&](AST::FnItem &fn) {
-                 insert_symbol(item.ident.symbol, item.id, CheckType::makeConcrete(fn.fn->to_type()));
-   }},
-   item.kind);
+                 insert_symbol(item.ident.symbol, item.id,
+                               CheckType::makeConcrete(fn.fn->to_type()));
+               }},
+               item.kind);
+    push_scope();
   }
 
   void visit_param(AST::Param &param) override {
-    if(std::holds_alternative<AST::IdentPat>(param.pat->kind)){
+    if (std::holds_alternative<AST::IdentPat>(param.pat->kind)) {
       auto &ident = std::get<AST::IdentPat>(param.pat->kind);
-      insert_symbol(ident.identifier.symbol, param.id, CheckType::makeConcrete(param.type->to_type()));
+      insert_symbol(ident.identifier.symbol, param.id,
+                    CheckType::makeConcrete(param.type->to_type()));
     }
   }
 
@@ -215,10 +222,16 @@ public:
         overloaded{
             [&](AST::LitExpr &lit) { context.unionize(expr.id, lit.lit->id); },
             [&](AST::LetExpr &let) {
-              if (std::holds_alternative<AST::IdentPat>(let.pattern->kind)) {
-                auto &pat = std::get<AST::IdentPat>(let.pattern->kind);
-                context.unionize(expr.id, let.expr->id);
-              }
+              std::visit(
+                  overloaded{[&](AST::IdentPat &val) {
+                               auto id = lookup_symbol(val.identifier.symbol);
+                               context.unionize(let.expr->id, id);
+                             },
+                             [&](AST::LitPat &val) {
+                               context.unionize(let.expr->id, val.expr->id);
+                             }},
+                  let.pattern->kind);
+              context.unionize(expr.id, let.expr->id);
             },
             [&](AST::BlockExpr &block) {
               auto b_expr = block.block->expr();
@@ -247,6 +260,12 @@ public:
               context.unionize(expr.id, expr_expr.expr->id);
             },
             [&](AST::CallExpr &call) {
+
+              auto t = FunctionType();
+              for (auto &param : call.params) {
+                // param->id
+              }
+
               context.unionize(expr.id, call.expr->id);
             },
             [&](AST::PathExpr &path) {
@@ -302,30 +321,62 @@ public:
   void visit_local(AST::Local &local) override {
     Visitor::visit_local(local);
 
-    if (std::holds_alternative<AST::IdentPat>(local.pat->kind)) {
-      auto &pat = std::get<AST::IdentPat>(local.pat->kind);
+    // if (local.type.has_value()) {
+    //   context.insert(local.id,
+    //                  CheckType::makeConcrete(local.type.value()->to_type()));
+    // } else {
+    //   context.insert(local.id, CheckType::makeVar(Type::makeUnset()));
+    // }
 
-      if (local.type.has_value()) {
-        local.check_type =
-            CheckType::makeConcrete(local.type.value()->to_type());
-      }
-
-      std::visit(overloaded{[&](AST::InitLocal &init) {
-                              insert_symbol(pat.identifier.symbol, local.id,
-                                            local.check_type);
+    std::visit(
+        overloaded{[&](AST::IdentPat &pat) {
+                     std::visit(
+                         overloaded{[&](AST::InitLocal &init) {
+                              insert_symbol(pat.identifier.symbol, local.id, local.check_type);
                               context.unionize(local.id, init.expr->id);
-                            },
-                            [&](AST::InitElseLocal &init) {
-                              insert_symbol(pat.identifier.symbol, local.id,
-                                            local.check_type);
+                          },
+                      [&](AST::InitElseLocal &init) {
+                          insert_symbol(pat.identifier.symbol, local.id, local.check_type);
+                          context.unionize(local.id, init.expr->id);
+                        },
+                        [&](AST::DeclLocal &decl) {
+                          insert_symbol(pat.identifier.symbol, local.id, local.check_type);
+                        }},
+                        local.kind);
+                   },
+                   [&](AST::LitPat &val) {
+                     std::visit(
+                         overloaded{[&](AST::InitLocal &init) {
+                              if (local.type.has_value()) {
+                                context.insert(local.id,
+                                               CheckType::makeConcrete(local.type.value()->to_type()));
+                              } else {
+                                context.insert(local.id, CheckType::makeVar(Type::makeUnset()));
+                              }
+                              context.unionize(init.expr->id, val.expr->id);
                               context.unionize(local.id, init.expr->id);
-                            },
-                            [&](AST::DeclLocal &decl) {
-                              insert_symbol(pat.identifier.symbol, local.id,
-                                            local.check_type);
-                            }},
-                 local.kind);
+                          },
+                      [&](AST::InitElseLocal &init) {
+                              if (local.type.has_value()) {
+                                context.insert(local.id,
+                                               CheckType::makeConcrete(local.type.value()->to_type()));
+                              } else {
+                                context.insert(local.id, CheckType::makeVar(Type::makeUnset()));
+                              }
+                            context.unionize(init.expr->id, val.expr->id);
+                            context.unionize(local.id, init.expr->id);
+                        },
+                        [&](AST::DeclLocal &decl) {
+                              if (local.type.has_value()) {
+                                context.insert(local.id,
+                                               CheckType::makeConcrete(local.type.value()->to_type()));
+                              } else {
+                                context.insert(local.id, CheckType::makeVar(Type::makeUnset()));
+                              }
+                        }},
+                        local.kind);
+                   }},
+        local.pat->kind);
     }
-  }
 };
 } // namespace MRC::TS

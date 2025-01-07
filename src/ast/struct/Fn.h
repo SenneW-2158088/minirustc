@@ -32,21 +32,21 @@ struct Fn {
         type(std::move(returnType)) {}
 
   TS::Type to_type() const {
-    std::vector<U<TS::Type>> param_types;
+    std::vector<U<TS::CheckType>> param_types;
     param_types.reserve(params.size());
 
     for (const auto &param : params) {
       if (param.type) {
-        param_types.push_back(std::make_unique<TS::Type>(param.type->to_type()));
+        param_types.push_back(std::make_unique<TS::CheckType>(TS::CheckType::makeConcrete(param.type->to_type())));
       }
     }
 
-    U<TS::Type> return_type;
+    U<TS::CheckType> return_type;
     if(type.has_value()){
-      return_type = MU<TS::Type>(type.value()->to_type());
+      return_type = MU<TS::CheckType>(TS::CheckType::makeConcrete(type.value()->to_type()));
     }
     else {
-      return_type = MU<TS::Type>(TS::Type::makeVoid());
+      return_type = MU<TS::CheckType>(TS::CheckType::makeConcrete(TS::Type::makeVoid()));
     }
     
     return TS::Type::makeFunction(std::move(param_types), std::move(return_type));

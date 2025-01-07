@@ -1,6 +1,5 @@
 #pragma once
 
-#include <iostream>
 #include <string>
 #include <variant>
 #include <vector>
@@ -9,6 +8,7 @@
 
 namespace MRC::TS {
 struct Type;
+struct CheckType;
 
 struct IntType {
   bool is_signed;
@@ -25,52 +25,22 @@ struct UnsetType {};
 struct VoidType {};
 
 struct FunctionType {
-  std::vector<U<Type>> params;
-  U<Type> return_type;
+  std::vector<U<CheckType>> params;
+  U<CheckType> return_type;
   FunctionType() = default;
 
-  // Constructor with parameters
-  FunctionType(std::vector<U<Type>> params, U<Type> return_type)
-      : params(std::move(params)), return_type(std::move(return_type)) {}
+  FunctionType(std::vector<U<CheckType>> params, U<CheckType> return_type) {
+    this->params = std::move(params);
+    this->return_type = std::move(return_type);
+  }
 
   FunctionType(const FunctionType &other) {
-    // Deep copy params vector
     params.reserve(other.params.size());
     for (const auto &param : other.params) {
-      params.push_back(std::make_unique<Type>(*param));
+      params.push_back(MU<CheckType>(*param));
     }
-
-    // Deep copy return type
-    if (other.return_type) {
-      return_type = std::make_unique<Type>(*other.return_type);
-    }
+    return_type = MU<CheckType>(*other.return_type);
   }
-
-  // Copy assignment operator
-  FunctionType &operator=(const FunctionType &other) {
-    if (this != &other) {
-      // Clear existing params
-      params.clear();
-
-      // Deep copy params vector
-      params.reserve(other.params.size());
-      for (const auto &param : other.params) {
-        params.push_back(std::make_unique<Type>(*param));
-      }
-
-      // Deep copy return type
-      if (other.return_type) {
-        return_type = std::make_unique<Type>(*other.return_type);
-      } else {
-        return_type = nullptr;
-      }
-    }
-    return *this;
-  }
-
-  // Move constructor and assignment can be defaulted
-  FunctionType(FunctionType &&) = default;
-  FunctionType &operator=(FunctionType &&) = default;
 };
 
 struct Type {
@@ -95,7 +65,8 @@ struct Type {
 
   static Type makeString() { return Type(StringType{}); }
 
-  static Type makeFunction(std::vector<U<Type>> params, U<Type> return_type) {
+  static Type makeFunction(std::vector<U<CheckType>> params,
+                           U<CheckType> return_type) {
     return Type(FunctionType{std::move(params), std::move(return_type)});
   }
 
@@ -129,21 +100,23 @@ struct Type {
                      }
                    },
                    [&](FunctionType &left, FunctionType &right) -> bool {
-                     if(left.params.size() != right.params.size()) return false;
-                     if(!left.return_type->equals(*right.return_type)) return false;
+                     if (left.params.size() != right.params.size())
+                       return false;
+                     if (!left.return_type->equals(*right.return_type))
+                       return false;
 
-                     for(int i = 0; i < left.params.size(); ++i) {
-                       if(!left.params[i]->unionize(*right.params[i])) return false;
+                     for (int i = 0; i < left.params.size(); ++i) {
+                       if (!left.params[i]->unionize(*right.params[i]))
+                         return false;
                      }
 
                      return true;
                    },
-                   [&](auto &left, UnsetType &right) -> bool {
-                     return true;
-                   },
+                   [&](auto &left, UnsetType &right) -> bool { return true; },
                    [&](auto &left, auto &right) -> bool {
                      return typeid(left) == typeid(right);
-                   }}, this->kind, other.kind);
+                   }},
+        this->kind, other.kind);
   }
 };
 
@@ -160,6 +133,7 @@ struct CheckType {
   TypeKind kind;
 
   explicit CheckType(TypeKind kind) : kind(kind) {}
+
   static CheckType makeVar(Type type) {
     return CheckType(VarType{.type = type});
   };

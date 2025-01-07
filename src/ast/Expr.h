@@ -127,6 +127,11 @@ public:
       , id(id)
       , type(TS::CheckType::makeVar(TS::Type::makeUnset())) {}
 
+  explicit Expr(Id id, ExprKind kind, TS::CheckType type)
+      : kind(std::move(kind))
+      , id(id)
+      , type(type) {}
+
   static Expr makeCall(Id id, U<Expr> expr, std::vector<U<Expr>> params) {
     return Expr(id, CallExpr(std::move(expr), std::move(params)));
   }

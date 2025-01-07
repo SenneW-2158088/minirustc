@@ -6,7 +6,9 @@
 
 #include "Token.h"
 #include "ast/Expr.h"
+#include "ast/Type.h"
 #include "ast/visitor/Visitor.h"
+#include "typechecking/TypeChecker.h"
 #include "util/util.h"
 
 namespace MRC::AST {
@@ -21,6 +23,8 @@ private:
     }
   }
 
+  TS::TypeContext *context;
+
   struct ScopeGuard {
     int &level;
     ScopeGuard(int &l) : level(l) { level++; }
@@ -28,6 +32,8 @@ private:
   };
 
 public:
+
+  PrintVisitor(TS::TypeContext * context) : context(context) {}
 
   void visit_body(Body &body) override {
     
@@ -62,7 +68,7 @@ public:
     std::cout << "Expr {\n";
 
     print_indent();
-    std::cout << "Type:" << expr.type.to_string() << std::endl;
+    std::cout << "Type:" << context->resolve(expr.id)->to_string() << std::endl;
 
     print_indent();
     std::cout << "id: " << expr.id << std::endl;
@@ -95,7 +101,7 @@ public:
     print_indent();
     std::cout << "Lit {\n";
     print_indent();
-    std::cout << "Type:" << lit.check_type.to_string() << std::endl;
+    std::cout << "Type:" << context->resolve(lit.id)->to_string() << std::endl;
 
     print_indent();
     std::cout << "id: " << lit.id << std::endl;
@@ -153,7 +159,7 @@ public:
     std::cout << "Local {\n";
 
     print_indent();
-    std::cout << "Type:" << local.check_type.to_string() << std::endl;
+    std::cout << "Type:" << context->resolve(local.id)->to_string() << std::endl;
 
     print_indent();
     std::cout << "id: " << local.id << std::endl;
@@ -214,6 +220,7 @@ public:
   void visit_fn(Fn &fn) override {
       print_indent();
       std::cout << "Fn {\n";
+
       {
         ScopeGuard guard(indent_level);
         Visitor::visit_fn(fn);
