@@ -1,6 +1,7 @@
 #include "ast/visitor/PrintVisitor.h"
 #include "driver/Driver.h"
 #include "lexer/Scanner.h"
+#include "mr/visitor/PrintVisitor.h"
 #include "parser/parser.h"
 #include "typechecking/TypeChecker.h"
 #include "interpreter/Interpreter.h"
@@ -18,6 +19,7 @@ void type_check(MRC::AST::Ast *ast) {
   MRC::INTERP::Interpreter interpreter(typechecker.context);
   MRC::MR::MrBuilder builder(typechecker.context);
 
+
   try {
     for (auto &body : ast->items) {
       typechecker.visit_item(body);
@@ -25,15 +27,17 @@ void type_check(MRC::AST::Ast *ast) {
 
     typechecker.context->print_context();
 
-    for (auto &body : ast->items) {
-      printer.visit_item(body);
-    }
+    // for (auto &body : ast->items) {
+    //   printer.visit_item(body);
+    // }
 
-    builder.build(*ast);
+    MRC::MR::Mr mr = builder.build(*ast);
 
+    MRC::MR::PrintVisitor mr_printer(&mr);
+    mr_printer.print();
 
-    auto entry = std::string("main");
-    interpreter.interp(entry);
+    // auto entry = std::string("main");
+    // interpreter.interp(entry);
     
   } catch (MRC::TS::TypeError err) {
     std::cout << err.what() << std::endl;

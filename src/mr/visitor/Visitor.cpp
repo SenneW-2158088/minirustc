@@ -146,46 +146,42 @@ void walk_body(Visitor *visitor, Body &body) {
   visitor->visit_expr(body.expr);
 }
 
-void Visitor::visit_stmt(Id &stmt) {
-  // walk_stmt(this, mr.);
+void Visitor::visit_stmt(Id id) {
+  walk_stmt(this, *mr->get_stmt(id));
 }
 
-void Visitor::visit_expr(Id &expr) {
-  // walk_expr(this, expr);
+void Visitor::visit_expr(Id id) {
+  walk_expr(this, *mr->get_expr(id));
 }
 
-void Visitor::visit_lit(Lit &lit) {
+void Visitor::visit_lit(Lit& lit) {
   walk_lit(this, lit);
 }
 
-void Visitor::visit_block(Id &block) {
-  // walk_block(this, block);
+void Visitor::visit_block(Id id) {
+  walk_block(this, *mr->get_block(id));
 }
 
-void Visitor::visit_local(Id &local) {
-  // walk_local(this, local);
+void Visitor::visit_local(Id id) {
+  walk_local(this, *mr->get_local(id));
 }
 
-void Visitor::visit_pat(Pat &pat) {
+void Visitor::visit_pat(Pat& pat) {
   walk_pat(this, pat);
 }
 
-void Visitor::visit_path(Path &path) {
+void Visitor::visit_path(Path& path) {
   walk_path(this, path);
 }
 
-void Visitor::visit_symbol(Symbol &symbol) { return; }
-
-void Visitor::visit_fn(Id &fn) {
-  // walk_fn(this, fn);
+void Visitor::visit_symbol(std::string& symbol) {
+  // Base implementation - can be overridden
 }
 
-void Visitor::visit_body(Id &body) {
-  // walk_body(this, body);
+void Visitor::visit_fn(Id id) {
+  walk_fn(this, *mr->get_fn(id));
 }
-void Visitor::visit_param(Id &param) {
-  // walk_pat(this, *param.pat);
-  // walk_type(this, *param.type);
-}
+
+void Visitor::visit_param(Id id) { }
 }
 // namespace MRC::AST

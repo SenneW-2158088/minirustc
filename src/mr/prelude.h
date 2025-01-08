@@ -73,6 +73,7 @@ struct Fn {
 
   Params params;
   Body body;
+  Id id;
   TS::Type type;
 };
 

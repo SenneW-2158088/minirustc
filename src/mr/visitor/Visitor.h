@@ -19,20 +19,20 @@ void walk_body(Visitor *visitor, Body &path);
 
 // Then define the visitor struct
 struct Visitor {
-private:
-  Mr mr;
+protected:
+  Mr *mr;
 public:
+  Visitor(Mr *mr) : mr(mr) {}
   // Root types
-  virtual void visit_stmt(Id &stmt);
-  virtual void visit_expr(Id &expr);
+  virtual void visit_stmt(Id id);
+  virtual void visit_expr(Id expr);
   virtual void visit_lit(Lit &lit);
-  virtual void visit_block(Id &block);
-  virtual void visit_local(Id &local);
+  virtual void visit_block(Id block);
+  virtual void visit_local(Id local);
   virtual void visit_pat(Pat &pat);
   virtual void visit_path(Path &path);
   virtual void visit_symbol(Symbol &symbol);
-  virtual void visit_fn(Id &fn);
-  virtual void visit_body(Id &fn);
-  virtual void visit_param(Id& param);
+  virtual void visit_fn(Id fn);
+  virtual void visit_param(Id param);
 };
 } // namespace MRC::AST
