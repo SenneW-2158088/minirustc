@@ -203,6 +203,9 @@ public:
       std::cout << "Item {\n";
 
       print_indent();
+      std::cout << "type: " << context->resolve(item.id)->to_string() << std::endl;
+
+      print_indent();
       std::cout << "id: " << item.id << std::endl;
       {
         ScopeGuard guard(indent_level);

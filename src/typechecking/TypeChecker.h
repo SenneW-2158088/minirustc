@@ -1,12 +1,6 @@
 #pragma once
 
-#include "ast/Body.h"
-#include "ast/Expr.h"
-#include "ast/struct/Block.h"
-#include "ast/struct/Fn.h"
-#include "ast/struct/Local.h"
-#include "ast/struct/Pat.h"
-#include "ast/visitor/Visitor.h"
+#include "ast/prelude.h"
 #include "typechecking/Type.h"
 #include "util/util.h"
 
@@ -61,7 +55,9 @@ struct TypeContext {
   std::map<int, CheckType> ranks;
   int rank_counter = 0;
 
-  void insert(AST::Id id, CheckType type) {
+  std::map<int, void*> nodes; // reference to nodes, quick hack for function type checking
+
+  void insert(AST::Id id, CheckType type, void* node_ptr) {
     if (mapping.find(id) != mapping.end()) {
       throw TypeError("Node with id " + std::to_string(id) +
                       " is already inserted");
@@ -71,6 +67,7 @@ struct TypeContext {
     ranks.emplace(rank, type);
     // std::cout << "Inserted " << id << " as " << type.to_string()
     //           << " with rank " << rank << std::endl;
+    nodes.emplace(id, node_ptr);
   }
 
   // Merge ranks
@@ -85,6 +82,11 @@ struct TypeContext {
 
     // std::cout << right << " points to rank " << left_rank << " -> "
     //           << resolve(left)->to_string() << std::endl;
+  }
+
+  void update(AST::Id id, CheckType type) {
+    auto *stored = resolve(id);
+    *stored = std::move(type);
   }
 
   void unionize(AST::Id left, AST::Id right) {
@@ -151,9 +153,9 @@ struct TypeContext {
 
 class TypeChecker : public AST::Visitor {
 private:
-  void insert_symbol(std::string symbol, AST::Id id, CheckType type) {
+  void insert_symbol(std::string symbol, AST::Id id, CheckType type, void* node_ptr) {
     scopes.back().insert(symbol, id, type);
-    context.insert(id, type);
+    context.insert(id, type, node_ptr);
   }
 
   std::optional<AST::Id> find_symbol_in_scope(const std::string &symbol,
@@ -199,7 +201,7 @@ public:
 
     std::visit(overloaded{[&](AST::FnItem &fn) {
                  insert_symbol(item.ident.symbol, item.id,
-                               CheckType::makeConcrete(fn.fn->to_type()));
+                               CheckType::makeConcrete(fn.fn->to_type()), &item);
                }},
                item.kind);
     push_scope();
@@ -208,15 +210,14 @@ public:
   void visit_param(AST::Param &param) override {
     if (std::holds_alternative<AST::IdentPat>(param.pat->kind)) {
       auto &ident = std::get<AST::IdentPat>(param.pat->kind);
-      insert_symbol(ident.identifier.symbol, param.id,
-                    CheckType::makeConcrete(param.type->to_type()));
+      insert_symbol(ident.identifier.symbol, param.id, CheckType::makeConcrete(param.type->to_type()), &param);
     }
   }
 
   void visit_expr(AST::Expr &expr) override {
     Visitor::visit_expr(expr);
 
-    context.insert(expr.id, expr.type);
+    context.insert(expr.id, expr.type, &expr);
 
     std::visit(
         overloaded{
@@ -261,10 +262,22 @@ public:
             },
             [&](AST::CallExpr &call) {
 
-              auto t = FunctionType();
+              std::vector<U<CheckType>> param_types;
               for (auto &param : call.params) {
-                // param->id
+                auto param_type = MU<CheckType>(*context.resolve(param->id));
+                param_types.push_back(std::move(param_type));
               }
+              auto return_type = MU<CheckType>(CheckType::makeVar(Type::makeUnset()));
+
+              context.update(expr.id, CheckType::makeVar(Type::makeFunction(std::move(param_types), std::move(return_type))));
+
+              // unionize parameters
+
+              // unionize function
+              //
+              // option 1) make a function to query an item node and get parameters
+              // option 2) 
+              // try get function
 
               context.unionize(expr.id, call.expr->id);
             },
@@ -309,7 +322,7 @@ public:
   }
 
   void visit_lit(AST::Lit &lit) override {
-    context.insert(lit.id, lit.check_type);
+    context.insert(lit.id, lit.check_type, &lit);
   }
 
   void visit_block(AST::Block &block) override {
@@ -332,15 +345,15 @@ public:
         overloaded{[&](AST::IdentPat &pat) {
                      std::visit(
                          overloaded{[&](AST::InitLocal &init) {
-                              insert_symbol(pat.identifier.symbol, local.id, local.check_type);
+                              insert_symbol(pat.identifier.symbol, local.id, local.check_type, &local);
                               context.unionize(local.id, init.expr->id);
                           },
                       [&](AST::InitElseLocal &init) {
-                          insert_symbol(pat.identifier.symbol, local.id, local.check_type);
+                          insert_symbol(pat.identifier.symbol, local.id, local.check_type, &local);
                           context.unionize(local.id, init.expr->id);
                         },
                         [&](AST::DeclLocal &decl) {
-                          insert_symbol(pat.identifier.symbol, local.id, local.check_type);
+                          insert_symbol(pat.identifier.symbol, local.id, local.check_type, &local);
                         }},
                         local.kind);
                    },
@@ -349,9 +362,9 @@ public:
                          overloaded{[&](AST::InitLocal &init) {
                               if (local.type.has_value()) {
                                 context.insert(local.id,
-                                               CheckType::makeConcrete(local.type.value()->to_type()));
+                                               CheckType::makeConcrete(local.type.value()->to_type()), &local);
                               } else {
-                                context.insert(local.id, CheckType::makeVar(Type::makeUnset()));
+                                context.insert(local.id, CheckType::makeVar(Type::makeUnset()), &local);
                               }
                               context.unionize(init.expr->id, val.expr->id);
                               context.unionize(local.id, init.expr->id);
@@ -359,9 +372,9 @@ public:
                       [&](AST::InitElseLocal &init) {
                               if (local.type.has_value()) {
                                 context.insert(local.id,
-                                               CheckType::makeConcrete(local.type.value()->to_type()));
+                                               CheckType::makeConcrete(local.type.value()->to_type()), &local);
                               } else {
-                                context.insert(local.id, CheckType::makeVar(Type::makeUnset()));
+                                context.insert(local.id, CheckType::makeVar(Type::makeUnset()), &local);
                               }
                             context.unionize(init.expr->id, val.expr->id);
                             context.unionize(local.id, init.expr->id);
@@ -369,9 +382,9 @@ public:
                         [&](AST::DeclLocal &decl) {
                               if (local.type.has_value()) {
                                 context.insert(local.id,
-                                               CheckType::makeConcrete(local.type.value()->to_type()));
+                                               CheckType::makeConcrete(local.type.value()->to_type()), &local);
                               } else {
-                                context.insert(local.id, CheckType::makeVar(Type::makeUnset()));
+                                context.insert(local.id, CheckType::makeVar(Type::makeUnset()), &local);
                               }
                         }},
                         local.kind);

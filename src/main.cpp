@@ -37,7 +37,8 @@ int main(int argc, char *argv[]) {
     
 
     fn main() {
-        let d = test();
+        let a = 32;
+        let d = test(a);
     }
     )";
   driver.parse(method);
