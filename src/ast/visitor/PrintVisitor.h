@@ -23,7 +23,7 @@ private:
     }
   }
 
-  TS::TypeContext *context;
+  P<TS::TypeContext> context;
 
   struct ScopeGuard {
     int &level;
@@ -33,7 +33,7 @@ private:
 
 public:
 
-  PrintVisitor(TS::TypeContext * context) : context(context) {}
+  PrintVisitor(P<TS::TypeContext> context) : context(context) {}
 
   void visit_body(Body &body) override {
     

@@ -37,6 +37,7 @@ struct Type {
                                 StringType, FunctionType, UnsetType>;
   TypeKind kind;
 
+  Type() : kind(VoidType()){}
   Type(TypeKind kind);
   static Type makeInt(bool is_signed, uint8_t bits);
   static Type makeFloat(uint8_t bits);

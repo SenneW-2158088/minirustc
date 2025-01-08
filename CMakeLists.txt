@@ -48,6 +48,7 @@ set(DRIVER
     ${CMAKE_CURRENT_SOURCE_DIR}/src/driver/Driver.cpp
 )
 
+
 set(AST
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ast/Ast.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ast/Expr.h
@@ -65,10 +66,20 @@ set(AST
     ${CMAKE_CURRENT_SOURCE_DIR}/src/ast/visitor/PrintVisitor.h
 )
 
+set(MR
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/mr/Mr.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/mr/Mr.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/mr/visitor/Visitor.cpp
+)
 set(TST
     ${CMAKE_CURRENT_SOURCE_DIR}/src/typechecking/Type.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/typechecking/Type.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/typechecking/TypeChecker.h
+)
+
+set(INTERPRETER
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/interpreter/Interpreter.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/interpreter/Interpreter.cpp
 )
 
 # Main executable
@@ -77,6 +88,8 @@ add_executable(mrc
     ${DRIVER}
     ${AST}
     ${TST}
+    ${MR}
+    ${INTERPRETER}
     ${GENERATED_SOURCES}
 )
 
