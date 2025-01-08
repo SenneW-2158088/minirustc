@@ -31,14 +31,15 @@ int main(int argc, char *argv[]) {
 
   MRC::Driver driver{};
   auto method = R"(
-    fn test(a: i32) {
+    fn test(a: i32, b: i64) {
       let b = a;
     }
     
 
     fn main() {
         let a = 32;
-        let d = test(a);
+        let b = a;
+        let d = test(a, b);
     }
     )";
   driver.parse(method);

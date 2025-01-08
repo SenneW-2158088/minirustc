@@ -310,11 +310,12 @@ expr.opt
     ;
 
 exprs
-    :
-    | expr { $$.push_back(std::move($1)); }
-    | exprs, expr {
+    : expr { 
+        $$.push_back(std::move($1)); 
+    }
+    | exprs COMMA expr {
         $$ = std::move($1);
-        $$.push_back(std::move($2));
+        $$.push_back(std::move($3));
     }
     ;
 

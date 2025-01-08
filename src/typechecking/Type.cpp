@@ -115,6 +115,7 @@ CheckType CheckType::makeConcrete(Type type) {
 bool CheckType::equals(CheckType &other) {
   return std::visit(
       overloaded{[&](VarType &val, ConcreteType &other) -> bool {
+                    return false;
                    return val.type.equals(other.type);
                  },
                  [&](VarType &val, VarType &other) -> bool {
@@ -124,6 +125,7 @@ bool CheckType::equals(CheckType &other) {
                    return val.type.equals(other.type);
                  },
                  [&](auto &val, auto &other) -> bool {
+                    return false;
                    return val.type.equals(other.type);
                  }},
       this->kind, other.kind);

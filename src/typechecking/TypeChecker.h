@@ -1,10 +1,12 @@
 #pragma once
 
+#include "ast/Item.h"
 #include "ast/prelude.h"
 #include "typechecking/Type.h"
 #include "util/util.h"
 
 #include <map>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <variant>
@@ -55,9 +57,10 @@ struct TypeContext {
   std::map<int, CheckType> ranks;
   int rank_counter = 0;
 
-  std::map<int, void*> nodes; // reference to nodes, quick hack for function type checking
+  std::map<int, void *>
+      nodes; // reference to nodes, quick hack for function type checking
 
-  void insert(AST::Id id, CheckType type, void* node_ptr) {
+  void insert(AST::Id id, CheckType type, void *node_ptr) {
     if (mapping.find(id) != mapping.end()) {
       throw TypeError("Node with id " + std::to_string(id) +
                       " is already inserted");
@@ -76,8 +79,9 @@ struct TypeContext {
     int right_rank = mapping[right];
     mapping[right] = left_rank;
 
-    for(auto &[id, rank] : mapping) {
-      if (rank == right_rank) rank = left_rank;
+    for (auto &[id, rank] : mapping) {
+      if (rank == right_rank)
+        rank = left_rank;
     }
 
     // std::cout << right << " points to rank " << left_rank << " -> "
@@ -99,7 +103,8 @@ struct TypeContext {
 
     // If types are equal merge ranks
     if (left_type->equals(*right_type)) {
-      // std::cout << "set " << right << ":" << right_type->to_string() << " to " << left << ":" << left_type->to_string() << std::endl;
+      // std::cout << "set " << right << ":" << right_type->to_string() << " to
+      // " << left << ":" << left_type->to_string() << std::endl;
       merge(left, right);
       return;
     }
@@ -107,13 +112,15 @@ struct TypeContext {
     // Try to unify types
     if (left_type->unionize(*right_type)) {
       merge(left, right);
-      // std::cout << "set " << right << ":" << right_type->to_string() << " to " << left << ":" << left_type->to_string() << std::endl;
+      // std::cout << "set " << right << ":" << right_type->to_string() << " to
+      // " << left << ":" << left_type->to_string() << std::endl;
       return;
     }
 
     if (right_type->unionize(*left_type)) {
       merge(right, left);
-      // std::cout << "set " << left << ":" << left_type->to_string() << " to " << right << ":" << right_type ->to_string() << std::endl;
+      // std::cout << "set " << left << ":" << left_type->to_string() << " to "
+      // << right << ":" << right_type ->to_string() << std::endl;
       return;
     }
 
@@ -153,7 +160,8 @@ struct TypeContext {
 
 class TypeChecker : public AST::Visitor {
 private:
-  void insert_symbol(std::string symbol, AST::Id id, CheckType type, void* node_ptr) {
+  void insert_symbol(std::string symbol, AST::Id id, CheckType type,
+                     void *node_ptr) {
     scopes.back().insert(symbol, id, type);
     context.insert(id, type, node_ptr);
   }
@@ -178,9 +186,7 @@ private:
     throw TypeError("Symbol '" + symbol + "' is not defined in current scope");
   }
 
-  void push_scope() {
-    scopes.push_back(Scope());
-  }
+  void push_scope() { scopes.push_back(Scope()); }
 
   void pop_scope() {
     scopes.back().print_scope();
@@ -200,8 +206,7 @@ public:
     Visitor::visit_item(item);
 
     std::visit(overloaded{[&](AST::FnItem &fn) {
-                 insert_symbol(item.ident.symbol, item.id,
-                               CheckType::makeConcrete(fn.fn->to_type()), &item);
+                 insert_symbol(item.ident.symbol, item.id, CheckType::makeConcrete(fn.fn->to_type()), &item);
                }},
                item.kind);
     push_scope();
@@ -210,7 +215,8 @@ public:
   void visit_param(AST::Param &param) override {
     if (std::holds_alternative<AST::IdentPat>(param.pat->kind)) {
       auto &ident = std::get<AST::IdentPat>(param.pat->kind);
-      insert_symbol(ident.identifier.symbol, param.id, CheckType::makeConcrete(param.type->to_type()), &param);
+      insert_symbol(ident.identifier.symbol, param.id,
+                    CheckType::makeConcrete(param.type->to_type()), &param);
     }
   }
 
@@ -261,29 +267,42 @@ public:
               context.unionize(expr.id, expr_expr.expr->id);
             },
             [&](AST::CallExpr &call) {
-
               std::vector<U<CheckType>> param_types;
               for (auto &param : call.params) {
                 auto param_type = MU<CheckType>(*context.resolve(param->id));
                 param_types.push_back(std::move(param_type));
               }
-              auto return_type = MU<CheckType>(CheckType::makeVar(Type::makeUnset()));
+              auto return_type =
+                  MU<CheckType>(CheckType::makeVar(Type::makeUnset()));
 
-              context.update(expr.id, CheckType::makeVar(Type::makeFunction(std::move(param_types), std::move(return_type))));
-
-              // unionize parameters
-
-              // unionize function
-              //
-              // option 1) make a function to query an item node and get parameters
-              // option 2) 
-              // try get function
+              context.update(expr.id, CheckType::makeVar(Type::makeFunction(
+                                          std::move(param_types),
+                                          std::move(return_type))));
 
               context.unionize(expr.id, call.expr->id);
+
+              auto *fn_node =
+                  static_cast<AST::Item *>(context.nodes[call.expr->id]);
+              if (!fn_node) {
+                throw TypeError("Called expression is not a function");
+              }
+
+              // Get the function parameters
+              auto &fn_item = std::get<AST::FnItem>(fn_node->kind);
+
+              if (call.params.size() != fn_item.fn->params.size()) {
+                throw TypeError("Function call has wrong number of parameters");
+              }
+
+              for (size_t i = 0; i < call.params.size(); i++) {
+                context.unionize(call.params[i]->id, fn_item.fn->params[i].id);
+              }
+
             },
             [&](AST::PathExpr &path) {
               auto id = lookup_symbol(path.path->to_string());
               context.unionize(expr.id, id);
+              expr.id = id;
             },
             [&](AST::ReturnExpr &val) {
               if (val.expr.has_value()) {
@@ -342,54 +361,71 @@ public:
     // }
 
     std::visit(
-        overloaded{[&](AST::IdentPat &pat) {
-                     std::visit(
-                         overloaded{[&](AST::InitLocal &init) {
-                              insert_symbol(pat.identifier.symbol, local.id, local.check_type, &local);
-                              context.unionize(local.id, init.expr->id);
-                          },
+        overloaded{
+            [&](AST::IdentPat &pat) {
+              std::visit(
+                  overloaded{[&](AST::InitLocal &init) {
+                               insert_symbol(pat.identifier.symbol, local.id,
+                                             local.check_type, &local);
+                               context.unionize(local.id, init.expr->id);
+                             },
+                             [&](AST::InitElseLocal &init) {
+                               insert_symbol(pat.identifier.symbol, local.id,
+                                             local.check_type, &local);
+                               context.unionize(local.id, init.expr->id);
+                             },
+                             [&](AST::DeclLocal &decl) {
+                               insert_symbol(pat.identifier.symbol, local.id,
+                                             local.check_type, &local);
+                             }},
+                  local.kind);
+            },
+            [&](AST::LitPat &val) {
+              std::visit(
+                  overloaded{
+                      [&](AST::InitLocal &init) {
+                        if (local.type.has_value()) {
+                          context.insert(local.id,
+                                         CheckType::makeConcrete(
+                                             local.type.value()->to_type()),
+                                         &local);
+                        } else {
+                          context.insert(local.id,
+                                         CheckType::makeVar(Type::makeUnset()),
+                                         &local);
+                        }
+                        context.unionize(init.expr->id, val.expr->id);
+                        context.unionize(local.id, init.expr->id);
+                      },
                       [&](AST::InitElseLocal &init) {
-                          insert_symbol(pat.identifier.symbol, local.id, local.check_type, &local);
-                          context.unionize(local.id, init.expr->id);
-                        },
-                        [&](AST::DeclLocal &decl) {
-                          insert_symbol(pat.identifier.symbol, local.id, local.check_type, &local);
-                        }},
-                        local.kind);
-                   },
-                   [&](AST::LitPat &val) {
-                     std::visit(
-                         overloaded{[&](AST::InitLocal &init) {
-                              if (local.type.has_value()) {
-                                context.insert(local.id,
-                                               CheckType::makeConcrete(local.type.value()->to_type()), &local);
-                              } else {
-                                context.insert(local.id, CheckType::makeVar(Type::makeUnset()), &local);
-                              }
-                              context.unionize(init.expr->id, val.expr->id);
-                              context.unionize(local.id, init.expr->id);
-                          },
-                      [&](AST::InitElseLocal &init) {
-                              if (local.type.has_value()) {
-                                context.insert(local.id,
-                                               CheckType::makeConcrete(local.type.value()->to_type()), &local);
-                              } else {
-                                context.insert(local.id, CheckType::makeVar(Type::makeUnset()), &local);
-                              }
-                            context.unionize(init.expr->id, val.expr->id);
-                            context.unionize(local.id, init.expr->id);
-                        },
-                        [&](AST::DeclLocal &decl) {
-                              if (local.type.has_value()) {
-                                context.insert(local.id,
-                                               CheckType::makeConcrete(local.type.value()->to_type()), &local);
-                              } else {
-                                context.insert(local.id, CheckType::makeVar(Type::makeUnset()), &local);
-                              }
-                        }},
-                        local.kind);
-                   }},
+                        if (local.type.has_value()) {
+                          context.insert(local.id,
+                                         CheckType::makeConcrete(
+                                             local.type.value()->to_type()),
+                                         &local);
+                        } else {
+                          context.insert(local.id,
+                                         CheckType::makeVar(Type::makeUnset()),
+                                         &local);
+                        }
+                        context.unionize(init.expr->id, val.expr->id);
+                        context.unionize(local.id, init.expr->id);
+                      },
+                      [&](AST::DeclLocal &decl) {
+                        if (local.type.has_value()) {
+                          context.insert(local.id,
+                                         CheckType::makeConcrete(
+                                             local.type.value()->to_type()),
+                                         &local);
+                        } else {
+                          context.insert(local.id,
+                                         CheckType::makeVar(Type::makeUnset()),
+                                         &local);
+                        }
+                      }},
+                  local.kind);
+            }},
         local.pat->kind);
-    }
+  }
 };
 } // namespace MRC::TS
