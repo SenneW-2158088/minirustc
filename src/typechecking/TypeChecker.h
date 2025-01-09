@@ -208,10 +208,10 @@ public:
   void visit_item(AST::Item &item) override {
     push_scope();
 
-    Visitor::visit_item(item);
 
     std::visit(overloaded{[&](AST::FnItem &fn) {
                  insert_symbol(item.ident.symbol, item.id, CheckType::makeConcrete(fn.fn->to_type()), &item);
+                  Visitor::visit_item(item);
                }},
                item.kind);
     push_scope();

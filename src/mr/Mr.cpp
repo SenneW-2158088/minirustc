@@ -199,19 +199,7 @@ Id MrBuilder::make_block(AST::Block &block) {
 
   auto scope = pop_scope();
 
-  auto id = mr.insert_block(result);
-
-  std::string symbol = "block_" + std::to_string(id);
-
-  insert_symbol(symbol, SymbolTable::Symbol(
-                  id,
-                  resolve_type(id, *type_context), // TODO: correct type 
-                  scope,
-                  SymbolTable::Symbol::Kind::Var
-                ));
-
-    return id;
-
+  return mr.insert_block(result);
 }
 
 Id MrBuilder::make_fn(AST::Fn &fn) {

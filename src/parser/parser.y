@@ -357,6 +357,9 @@ if_expr
         auto b_expr = MU<Expr>(Expr::makeBlock(ast->getId(), std::move($5)));
         $$ = MU<Expr>(Expr::makeIfElse(ast->getId(), std::move($2), std::move($3), std::move(b_expr)));
     }
+    | IF expr block_expr ELSE if_expr {
+        $$ = MU<Expr>(Expr::makeIfElse(ast->getId(), std::move($2), std::move($3), std::move($5)));
+    }
     ;
 
 loop_expr
@@ -381,7 +384,6 @@ operator_expr
     | expr STAR expr            { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeMul(), std::move($1), std::move($3))); }
     | expr SLASH expr           { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeDiv(), std::move($1), std::move($3))); }
     | expr EQ expr              { $$ = MU<Expr>(Expr::makeAssign(ast->getId(), std::move($1), std::move($3))); }
-
     | expr EQEQ expr            { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeEq(), std::move($1), std::move($3))); }
     | expr GT expr              { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeGt(), std::move($1), std::move($3))); }
     | expr LT expr              { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeLt(), std::move($1), std::move($3))); }

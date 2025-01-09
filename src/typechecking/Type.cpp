@@ -61,8 +61,7 @@ bool Type::unionize(Type &other) {
             if (left.bits >= right.bits && left.is_signed == right.is_signed) {
               right = left;
               return true;
-            } else if (left.bits <= right.bits &&
-                       left.is_signed == right.is_signed) {
+            } else if (left.bits <= right.bits) {
               left = right;
               return true;
             }

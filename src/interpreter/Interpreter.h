@@ -37,6 +37,9 @@ struct ControlFlow {
 
   Type type = Type::None;
   Opt<Value> value;
+
+  ControlFlow() : type(Type::None) {}
+  ControlFlow(Opt<Value> value, Type type) : value(value), type(type) {}
 };
 
 struct Block {
@@ -69,10 +72,10 @@ struct Environment {
     Variable* lookup_variable(const std::string& name);
     Variable* lookup_variable_mut(const std::string& name);
     void print(int depth = 0) const;
+    Value setup_fn_environment(std::vector<Value> &params, MR::Id fn_id);
 
     Environment(MR::Mr &mr) : mr(mr) {}
-    Environment(Environment *parent, MR::Mr &mr, P<MR::SymbolTable> symbol_table, Opt<Flow> flow = std::nullopt)
-      : parent(parent), mr(mr), symbol_table(symbol_table), flow(flow), variables{} {}
+    Environment(Environment *parent, MR::Mr &mr, P<MR::SymbolTable> symbol_table, Opt<Flow> flow = std::nullopt);
 
 };
 

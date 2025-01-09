@@ -23,16 +23,12 @@ void type_check(MRC::AST::Ast *ast) {
       typechecker.visit_item(body);
     }
 
-    typechecker.context->print_context();
-
-    // for (auto &body : ast->items) {
-    //   printer.visit_item(body);
-    // }
+    // typechecker.context->print_context();
 
     MRC::MR::Mr mr = builder.build(*ast);
-    MRC::MR::PrintVisitor mr_printer(&mr);
-    mr_printer.print();
-    mr.tree->print();
+    // MRC::MR::PrintVisitor mr_printer(&mr);
+    // mr_printer.print();
+    // mr.tree->print();
 
     MRC::INTERP::Interpreter interpreter(typechecker.context, mr);
 
@@ -48,18 +44,17 @@ int main(int argc, char *argv[]) {
 
   MRC::Driver driver{};
   auto method = R"(
-    fn main() {
-        let a = 32;
-        let b = 50;
-        let c = a + b;
-        a + 3;
+    
+    fn fibonacci(n: i32) -> i32 {
+       if n == 0 { return 0; }
+       if n == 1 { return 1; }
+   
+       return fibonacci(n - 1) + fibonacci(n - 2);
+    }
 
-        if a > b {
-            println!(a);
-        } else {
-          println!(b);
-        }
-        println!(299);
+    fn main() {
+      let b = fibonacci(10);
+      println!(b);
     }
     )";
   driver.parse(method);

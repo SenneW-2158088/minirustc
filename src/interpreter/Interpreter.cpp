@@ -1,6 +1,8 @@
 #include "interpreter/Interpreter.h"
+#include "interpreter/Type.h"
 #include "mr/prelude.h"
 #include "typechecking/TypeChecker.h"
+#include <iterator>
 #include <memory>
 #include <unistd.h>
 #include <variant>
@@ -112,6 +114,22 @@ Value Environment::evaluate_fn(MR::Id fn) {
   return Value{}; // Return empty value for functions without body
 }
 
+Value Environment::setup_fn_environment(std::vector<Value> &params, MR::Id fn_id) {
+
+  P<Environment> fe = std::make_shared<Environment>(Environment(this, mr, nullptr));
+  children.push_back(fe);
+
+  auto node = mr.get_fn(fn_id);
+  for(int i = 0; i < params.size(); i++) {
+    auto p = mr.get_param(node->params[i]);
+    auto &ident= std::get<MR::IdentPat>(p->pat.kind);
+    fe->declare_variable(ident.identifier, ident.binding.isMutable());
+    fe->set_variable(ident.identifier, params[i]);
+  }
+  return fe->evaluate_fn(fn_id);
+}
+
+
 Value Environment::evaluate_expr(MR::Id &expr) {
   auto node = mr.get_expr(expr);
   if (!node) {
@@ -123,18 +141,35 @@ Value Environment::evaluate_expr(MR::Id &expr) {
                  [&](MR::BlockExpr &val) -> Value {
                    return evaluate_block(val.block);
                  },
+                 [&](MR::ExprExpr &val) -> Value {
+                   return evaluate_expr(val.expr);
+                 },
                  [&](MR::CallExpr &val) -> Value {
                    auto fn_val = evaluate_expr(val.expr);
                    std::vector<Value> args;
                    for (auto &param : val.params) {
                      args.push_back(evaluate_expr(param));
                    }
-                   // TODO: Call function with args
+
+                   if(fn_val.is_function()) {
+                     auto fn = std::get<Function>(fn_val.kind);
+                     return setup_fn_environment(args, fn.id);
+                   }
+
                    return Value{};
                  },
                  [&](MR::PathExpr &val) -> Value {
                    auto var = get_variable(val.path.to_string());
                    return var;
+                 },
+                 [&](MR::ReturnExpr &val) -> Value {
+                   if(val.expr.has_value()) {
+                     Value v = evaluate_expr(val.expr.value()); 
+                     control = ControlFlow(v, ControlFlow::Type::Return);
+                     return v;
+                   }
+                   control = ControlFlow(Value(), ControlFlow::Type::Return);
+                   return Value();
                  },
                  [&](MR::IfExpr &val) -> Value {
 
@@ -225,6 +260,16 @@ Value Environment::evaluate_stmt(MR::Id &stmt) {
           }},
       node->kind);
 }
+Environment::Environment(Environment *parent, MR::Mr &mr, P<MR::SymbolTable> symbol_table, Opt<Flow> flow)
+  : parent(parent), mr(mr), symbol_table(symbol_table), flow(flow), variables{} {
+    if(!symbol_table) return;
+
+    for(auto &[name, symbol] : symbol_table->symbols) {
+      std::string n = name;
+      declare_variable(n, false);
+      set_variable(n, Value(Function(symbol->id)));
+    }
+  }
 
 Value Environment::evaluate_block(MR::Id &block) {
   auto node = mr.get_block(block);
@@ -234,7 +279,13 @@ Value Environment::evaluate_block(MR::Id &block) {
 
   Value last_value{};
   for (auto &stmt : node->statements) {
-    last_value = evaluate_stmt(stmt);
+    if(control.type == ControlFlow::Type::None) {
+       last_value = evaluate_stmt(stmt);
+    }
+    else {
+      // return control.value;
+      return last_value;
+    }
   }
   return last_value;
 }
@@ -252,8 +303,6 @@ void Interpreter::interp(std::string &entry) {
   if (fn_entry.has_value()) {
     root.evaluate_fn(fn_entry.value()->id);
   }
-
-  root.print();
 }
 
 } // namespace MRC::INTERP

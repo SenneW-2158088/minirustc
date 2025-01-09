@@ -61,6 +61,7 @@ FLOAT_SUFFIX    (f32|f64)
 "%"         { return MRC::Token(yytext, "", Token::TOKEN_PERCENT, m_driver.location); }
 "^"         { return MRC::Token(yytext, "", Token::TOKEN_CARET, m_driver.location); }
 "="         { return MRC::Token(yytext, "", Token::TOKEN_EQ, m_driver.location); }
+"=="         { return MRC::Token(yytext, "", Token::TOKEN_EQEQ, m_driver.location); }
 "+="        { return MRC::Token(yytext, "", Token::TOKEN_PLUSEQ, m_driver.location); }
 "-="        { return MRC::Token(yytext, "", Token::TOKEN_MINUSEQ, m_driver.location); }
 "*="        { return MRC::Token(yytext, "", Token::TOKEN_STAREQ, m_driver.location); }

@@ -6,11 +6,17 @@
 #include <variant>
 
 namespace MRC::INTERP {
-struct Function;
+struct Value;
+
+struct Function{
+  MR::Id id;
+  std::string name;
+  Function(MR::Id id) : id(id) {};
+};
+
 struct Unit{};
 struct Value {
-  using ValueKind = std::variant<Unit, bool, int, double, std::string,
-                                 std::shared_ptr<Function>>;
+  using ValueKind = std::variant<Unit, bool, int, double, std::string, Function>;
 
   ValueKind kind;
   Value() : kind(Unit{}) {}
@@ -21,9 +27,7 @@ struct Value {
   bool is_int() const { return std::holds_alternative<int>(kind); }
   bool is_float() const { return std::holds_alternative<double>(kind); }
   bool is_string() const { return std::holds_alternative<std::string>(kind); }
-  bool is_function() const {
-    return std::holds_alternative<std::shared_ptr<Function>>(kind);
-  }
+  bool is_function() const { return std::holds_alternative<Function>(kind); }
 
   // Value extraction helpers
   template <typename T> T &as() { return std::get<T>(kind); }
@@ -38,8 +42,8 @@ struct Value {
                    [](int i) -> std::string { return std::to_string(i); },
                    [](double d) -> std::string { return std::to_string(d); },
                    [](const std::string &s) -> std::string { return s; },
-                   [](const std::shared_ptr<Function> &) -> std::string {
-                     return "<function>";
+                   [](const Function &f) -> std::string {
+                     return "<function> " + std::to_string(f.id);
                    }},
         kind);
   }
