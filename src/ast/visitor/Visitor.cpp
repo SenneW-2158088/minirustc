@@ -1,6 +1,7 @@
 #include "Visitor.h"
 #include "ast/Expr.h"
 #include "ast/Item.h"
+#include "ast/Stmt.h"
 #include "ast/struct/Fn.h"
 #include "util/util.h"
 #include <cstdio>
@@ -16,6 +17,7 @@ void walk_stmt(Visitor *visitor, Stmt &stmt) {
                  [&visitor](ItemStmt &val) { visitor->visit_item(*val.item); },
                  [&visitor](SemiStmt &val) { visitor->visit_expr(*val.expr); },
                  [&visitor](EmptyStmt &val) { return; },
+                 [&visitor](PrintStmt &val) { visitor->visit_expr(*val.expr); },
                  [&visitor](auto &val) { /* TODO */
                                          return;
                  }},

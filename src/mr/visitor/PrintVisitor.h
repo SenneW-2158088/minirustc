@@ -2,7 +2,9 @@
 
 #include <iostream>
 #include <string>
+#include <variant>
 #include "mr/Mr.h"
+#include "mr/prelude.h"
 #include "mr/visitor/Visitor.h"
 
 namespace MRC::MR {
@@ -33,7 +35,7 @@ public:
   void visit_stmt(Id id) override {
     print_indent();
     std::cout << "Stmt[" << id << "] {\n";
-
+        
     {
       ScopeGuard guard(indent_level);
       Visitor::visit_stmt(id);

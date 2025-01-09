@@ -10,13 +10,11 @@
 
 #include <cstdio>
 #include <cwchar>
-#include <memory>
 
 void type_check(MRC::AST::Ast *ast) {
   MRC::TS::TypeChecker typechecker{};
 
   MRC::AST::PrintVisitor printer{typechecker.context};
-  MRC::INTERP::Interpreter interpreter(typechecker.context);
   MRC::MR::MrBuilder builder(typechecker.context);
 
 
@@ -32,12 +30,14 @@ void type_check(MRC::AST::Ast *ast) {
     // }
 
     MRC::MR::Mr mr = builder.build(*ast);
-
     MRC::MR::PrintVisitor mr_printer(&mr);
     mr_printer.print();
+    mr.tree->print();
 
-    // auto entry = std::string("main");
-    // interpreter.interp(entry);
+    MRC::INTERP::Interpreter interpreter(typechecker.context, mr);
+
+    auto entry = std::string("main");
+    interpreter.interp(entry);
     
   } catch (MRC::TS::TypeError err) {
     std::cout << err.what() << std::endl;
@@ -50,7 +50,10 @@ int main(int argc, char *argv[]) {
   auto method = R"(
     fn main() {
         let a = 32;
-        let b = a;
+        let b = 18;
+        let c = a + b;
+        a + 3;
+        println!(a);
     }
     )";
   driver.parse(method);

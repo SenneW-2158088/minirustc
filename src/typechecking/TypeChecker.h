@@ -1,6 +1,8 @@
 #pragma once
 
+#include "ast/Expr.h"
 #include "ast/Item.h"
+#include "ast/Stmt.h"
 #include "ast/prelude.h"
 #include "typechecking/Type.h"
 #include "util/util.h"
@@ -339,7 +341,7 @@ public:
     std::visit(
         overloaded{[&](AST::LetStmt &let) {}, [&](AST::ExprStmt &expr) {},
                    [&](AST::ItemStmt &item) {}, [&](AST::SemiStmt &item) {},
-                   [&](AST::EmptyStmt &item) {}},
+                   [&](AST::EmptyStmt &item) {}, [&](AST::PrintStmt &stmt){}},
         stmt.kind);
   }
 

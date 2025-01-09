@@ -59,6 +59,14 @@ public:
 struct Path {
   using PathSegments = std::vector<Symbol>;
   PathSegments segments;
+
+  std::string to_string() const {
+    std::string result = segments.at(0);
+    for(int i = 1; i < segments.size(); i++) {
+      result.append(":" + segments[i]);
+    }
+    return result;
+  }
 };
 
 struct Param {
@@ -198,6 +206,10 @@ struct ExprStmt {
     Id expr;
 };
 
+struct PrintStmt {
+  Id expr;
+};
+
 struct LetStmt {
     Pat pattern;
     Opt<Id> initializer;
@@ -207,7 +219,8 @@ struct LetStmt {
 struct Stmt {
     using StmtKind = std::variant<
         ExprStmt,
-        LetStmt
+        LetStmt,
+        PrintStmt
     >;
     Id id;
     StmtKind kind;

@@ -76,6 +76,8 @@
 %token <MRC::Token> COMMA SEMI COLON RIGHT_ARROW LEFT_ARROW
 %token <MRC::Token> LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE
 
+
+%token <MRC::Token> PRINT
 %token <MRC::Token> IDENTIFIER
 %token <MRC::Token> TYPE
 %token <MRC::Token> SCOPE_RESOLUTION
@@ -139,6 +141,8 @@
 %verbose
 %define parse.trace
 %define parse.error verbose
+
+%left PRINT
 
 %%
 program
@@ -211,6 +215,7 @@ block
 statement
     : item                    { $$ = Stmt::makeItem(ast->getId(), std::move($1)); }
     | LET local SEMI          { $$ = Stmt::makeLet(ast->getId(), std::move($2)); }
+    | PRINT LPAREN expr_without_block RPAREN SEMI { $$ = Stmt::makePrint(ast->getId(), std::move($3)); }
     | expr_with_block         { $$ = Stmt::makeExpr(ast->getId(), std::move($1)); }
     | expr_without_block SEMI { $$ = Stmt::makeExpr(ast->getId(), std::move($1)); }
     ;
@@ -310,7 +315,8 @@ expr.opt
     ;
 
 exprs
-    : expr { 
+    :
+    | expr { 
         $$.push_back(std::move($1)); 
     }
     | exprs COMMA expr {

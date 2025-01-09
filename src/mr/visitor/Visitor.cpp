@@ -15,6 +15,9 @@ void walk_stmt(Visitor *visitor, Stmt &stmt) {
       [&visitor](ExprStmt &val) {
         visitor->visit_expr(val.expr);
       },
+      [&visitor](PrintStmt &val) {
+        visitor->visit_expr(val.expr);
+      },
       [&visitor](LetStmt &val) {
         visitor->visit_pat(val.pattern);
         if(val.initializer.has_value()) {

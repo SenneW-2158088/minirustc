@@ -27,6 +27,10 @@ public:
 
 struct EmptyStmt {};
 
+struct PrintStmt {
+  U<Expr> expr;
+};
+
 struct ItemStmt {
   U<Item> item;
   ItemStmt() = default;
@@ -43,7 +47,7 @@ public:
 
 struct Stmt {
   using StmtKind =
-      std::variant<ExprStmt, LetStmt, EmptyStmt, ItemStmt, SemiStmt>;
+      std::variant<ExprStmt, LetStmt, EmptyStmt, ItemStmt, SemiStmt, PrintStmt>;
   StmtKind kind{};
   Id id;
 
@@ -59,5 +63,6 @@ public:
   static Stmt makeItem(Id id, U<Item> item) { return Stmt(id, ItemStmt(std::move(item))); }
 
   static Stmt makeSemi(Id id, U<Expr> expr) { return Stmt(id, SemiStmt(std::move(expr))); }
+  static Stmt makePrint(Id id, U<Expr> expr) { return Stmt(id, PrintStmt(std::move(expr))); }
 };
 } // namespace MRC::AST

@@ -1,8 +1,11 @@
 #pragma once
 
 #include "ast/prelude.h"
-#include "ast/visitor/Visitor.h"
+#include "mr/Mr.h"
+#include "mr/prelude.h"
+#include "mr/visitor/Visitor.h"
 #include "typechecking/TypeChecker.h"
+#include "interpreter/Type.h"
 
 namespace MRC::INTERP {
 
@@ -15,25 +18,6 @@ class ImmutableError : public RuntimeError {
 public:
   explicit ImmutableError(const std::string &name)
       : RuntimeError("Cannot modify immutable variable: " + name) {}
-};
-
-
-// Represents a runtime value 
-struct Value {
-  union Stored {
-        
-  };
-
-  Stored stored;
-
-  Value() = default;
-};
-
-struct Variable {
-  Value value;  
-  bool is_mutable;
-
-  Variable() = default;
 };
 
 struct Flow {
@@ -60,34 +44,47 @@ struct Block {
 };
 
 struct Environment {
-    P<Environment> parent;
+    MR::Mr &mr;
+    P<MR::SymbolTable> symbol_table;
+
+    Environment *parent;
     std::vector<P<Environment>> children;
 
     std::map<std::string, P<Variable>> variables;
 
-    // For controlling how the program executes
     Opt<Flow> flow;
     ControlFlow control;
 
     // Evaluate an expression
-    Value evalute_item(AST::Item &item);
-    Value evaluate_expr(AST::Expr& expr);
-    Value evaluate_stmt(AST::Expr& expr);
-    Value evaluate_local(AST::Local& expr);
-    Value evaluate_block(AST::Block& expr);
+    Value evaluate_fn(MR::Id fn);
+    Value evaluate_expr(MR::Id & expr);
+    Value evaluate_stmt(MR::Id & stmt);
+    Value evaluate_local(MR::Id & local);
+    Value evaluate_block(MR::Id & block);
+
+    void declare_variable(const std::string& name, bool is_mutable = false);
+    void set_variable(const std::string& name, const Value& value);
+    Value get_variable(const std::string& name);
+    bool has_variable(const std::string& name);
+    Variable* lookup_variable(const std::string& name);
+    Variable* lookup_variable_mut(const std::string& name);
+    void print(int depth = 0) const;
+
+    Environment(MR::Mr &mr) : mr(mr) {}
+    Environment(Environment *parent, MR::Mr &mr, P<MR::SymbolTable> symbol_table, Opt<Flow> flow = std::nullopt)
+      : parent(parent), mr(mr), symbol_table(symbol_table), flow(flow), variables{} {}
+
 };
 
 // Interpreter visitor
-class Interpreter : public AST::Visitor {
+class Interpreter {
 private:
   P<TS::TypeContext> type_context;
+  P<Environment> environment;
+  MR::Mr &mr;
 public:
-  Interpreter(P<TS::TypeContext> context);
-  void visit_item(AST::Item &item) override;
-  void visit_stmt(AST::Stmt &stmt) override;
-  void visit_expr(AST::Expr &expr) override;
-  void visit_local(AST::Local &local) override;
-
+  Interpreter(P<TS::TypeContext> context, MR::Mr& mr);
+  
   // Start the interpreter
   void interp(std::string &entry);
 };

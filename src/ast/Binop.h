@@ -6,19 +6,19 @@
 
 
 namespace MRC::AST {
-    struct Add {};
-    struct Sub {};
-    struct Mul {};
-    struct Div {};
-    struct And {};
-    struct Or {};
-    struct Eq {};
-    struct Lt {};
-    struct Le {};
-    struct Ne {};
-    struct Ge {};
-    struct Gt {};
 
+        struct Add {};
+        struct Sub {};
+        struct Mul {};
+        struct Div {};
+        struct And {};
+        struct Or {};
+        struct Eq {};
+        struct Lt {};
+        struct Le {};
+        struct Ne {};
+        struct Ge {};
+        struct Gt {};
     struct BinOp {
         using Kind = std::variant<Add, Sub, Mul, Div,
                                 And, Or,

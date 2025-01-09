@@ -1,6 +1,8 @@
 #pragma once
 
+#include <exception>
 #include <map>
+#include <stdexcept>
 #include <string>
 
 #include "ast/Ast.h"
@@ -18,58 +20,35 @@
 
 namespace MRC::MR {
 
-class SymbolTable {
-private:
-    struct Symbol;
-    struct Scope {
-        std::map<std::string, P<SymbolTable::Symbol>> symbols;
-        P<Scope> parent;
-        
-        Scope(P<Scope> parent = nullptr) : parent(parent) {}
-    };
-    
-    struct Symbol {
-        enum class Kind { Function, Variable };
-        Kind kind;
-        Id id;  // Either local_id or block_id depending on kind
-        TS::Type type;
-    };
-    
-    P<Scope> current_scope;
+struct SymbolTable {
 
-public:
-    SymbolTable() : current_scope(std::make_shared<Scope>()) {}
-    
-    void enter_scope() {
-        current_scope = std::make_shared<Scope>(current_scope);
-    }
-    
-    void exit_scope() {
-        if (current_scope->parent) {
-            current_scope = current_scope->parent;
-        }
-    }
-    
-    void insert(std::string name, TS::Type type, Symbol::Kind kind, Id id) {
-        current_scope->symbols.emplace(name, std::make_shared<Symbol>(Symbol{kind, id, type}));
-    }
-    
-    Opt<P<Symbol>> lookup(const std::string& name) {
-        P<Scope> scope = current_scope;
-        while (scope) {
-            auto it = scope->symbols.find(name);
-            if (it != scope->symbols.end()) {
-                return it->second;
-            }
-            scope = scope->parent;
-        }
-        return std::nullopt;
-    }
+  struct Symbol {
+    Id id;
+    TS::Type type;
+    P<SymbolTable> subscope;
+    enum class Kind { Func, Var, Type, Block} kind;
+
+    Symbol(Id id, TS::Type type, P<SymbolTable> subscope, Kind k = Kind::Var)
+      : id(id), type(type), kind(k), subscope(subscope) {}
+  };
+
+  SymbolTable *parent;
+  std::map<std::string, P<Symbol>> symbols;
+
+  SymbolTable() : parent(nullptr) {}
+
+  explicit SymbolTable(SymbolTable* parent_scope) : parent(parent_scope) {}
+  Opt<P<Symbol>> insert(std::string &name, Symbol &symbol);
+  Opt<P<Symbol>> lookup(std::string &name);
+  Opt<P<SymbolTable>> subscope();
+
+  void print() const;
+  void print_internal(int indent) const;
 };
 
 struct Mr {
 public:
-  SymbolTable tree;
+  P<SymbolTable> tree;
   std::vector<P<Expr>> expressions;
   std::vector<P<Stmt>> statements;
   std::vector<P<Block>> blocks;
@@ -129,44 +108,71 @@ public:
 
   void dump() const {
     std::cout << "Expressions" << std::endl;
-    for(auto & expr : expressions) {
-        std::cout << expr->id << std::endl;
+    for (auto &expr : expressions) {
+      std::cout << expr->id << std::endl;
     }
 
     std::cout << "Statements" << std::endl;
-    for(auto & stmt : statements) {
-        std::cout << stmt->id << std::endl;
+    for (auto &stmt : statements) {
+      std::cout << stmt->id << std::endl;
     }
 
     std::cout << "Blocks" << std::endl;
-    for(auto & block : blocks) {
-        std::cout << block->id << std::endl;
+    for (auto &block : blocks) {
+      std::cout << block->id << std::endl;
     }
 
     std::cout << "Locals" << std::endl;
-    for(auto & local : locals) {
-        std::cout << local->id << std::endl;
+    for (auto &local : locals) {
+      std::cout << local->id << std::endl;
     }
 
     std::cout << "Params" << std::endl;
-    for(auto & param : params) {
-        std::cout << param->id << std::endl;
+    for (auto &param : params) {
+      std::cout << param->id << std::endl;
     }
 
     std::cout << "Functions" << std::endl;
-    for(auto & fn : functions) {
-        std::cout << fn->id << std::endl;
+    for (auto &fn : functions) {
+      std::cout << fn->id << std::endl;
     }
-}
+  }
 };
 
 struct MrBuilder {
 private:
   P<TS::TypeContext> type_context;
   Mr mr;
+  std::vector<P<SymbolTable>> scopes;
 
 public:
-  MrBuilder(P<TS::TypeContext> context) : type_context(context) , mr{} {}
+  MrBuilder(P<TS::TypeContext> context) : type_context(context), mr{} {
+    scopes.push_back(std::make_shared<SymbolTable>(nullptr));
+  }
+
+  P<SymbolTable> pop_scope() {
+    auto stored = scopes.back();
+    scopes.pop_back();
+    return stored;
+  }
+
+  P<SymbolTable::Symbol> insert_symbol(std::string &name, SymbolTable::Symbol symbol) {
+    auto result = scopes.back()->insert(name, symbol);
+    std::cout << "inserting symbol: " << name << std::endl;
+    if(result.has_value()) return result.value();
+    throw std::runtime_error("symbol already exists");
+  }
+
+  P<SymbolTable> push_scope() {
+    auto result = scopes.back()->subscope();
+    if(result.has_value()) {
+      scopes.push_back(result.value());
+      return result.value();
+    }
+    throw std::runtime_error("failed to create subscope");
+  }
+  
+  
   Id make_block(AST::Block &block);
   Id make_expr(AST::Expr &expr);
   Id make_fn(AST::Fn &expr);
@@ -181,6 +187,5 @@ public:
   Pat make_pat(AST::Pat &lit);
 
   Mr build(AST::Ast &ast);
-
 };
 } // namespace MRC::MR

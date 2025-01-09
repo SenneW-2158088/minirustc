@@ -1,6 +1,8 @@
 #include "mr/Mr.h"
+#include "Token.h"
 #include "ast/Ast.h"
 #include "ast/Expr.h"
+#include "ast/Stmt.h"
 #include "ast/struct/Fn.h"
 #include "ast/struct/Local.h"
 #include "ast/struct/Path.h"
@@ -10,9 +12,69 @@
 #include "util/util.h"
 #include <memory>
 #include <optional>
+#include <string>
 #include <variant>
 
 namespace MRC::MR {
+
+Opt<P<SymbolTable::Symbol>> SymbolTable::lookup(std::string &symbol) {
+  auto si = symbols.find(symbol);
+  if (si == symbols.end())
+    return std::nullopt;
+  return si->second;
+}
+
+Opt<P<SymbolTable::Symbol>> SymbolTable::insert(std::string &name, Symbol &symbol) {
+  if (lookup(name).has_value()) return std::nullopt;
+
+  auto shared = std::make_shared<Symbol>(symbol);
+  symbols[name] = shared;
+  return shared;
+}
+
+Opt<P<SymbolTable>> SymbolTable::subscope() {
+  return std::make_shared<SymbolTable>(this);
+}
+
+void SymbolTable::print() const {
+    print_internal(0);
+}
+
+// Helper method to print with indentation
+void SymbolTable::print_internal(int indent = 0) const {
+    std::string indent_str(indent * 2, ' '); // 2 spaces per indent level
+
+    for (const auto& [name, symbol] : symbols) {
+        std::cout << indent_str << name << " : ";
+        
+        switch (symbol->kind) {
+            case Symbol::Kind::Func:
+                std::cout << "Function";
+                break;
+            case Symbol::Kind::Var:
+                std::cout << "Variable";
+                break;
+            case Symbol::Kind::Type:
+                std::cout << "Type";
+                break;
+            case Symbol::Kind::Block:
+                std::cout << "Block";
+                break;
+        }
+        
+        std::cout << " (id: " << symbol->id << ")";
+
+        std::cout << " : " << symbol->type.to_string();
+
+        std::cout << "\n";
+
+        if (symbol->subscope) {
+            std::cout << indent_str << "  {\n";
+            symbol->subscope->print_internal(indent + 2);
+            std::cout << indent_str << "  }\n";
+        }
+    }
+}
 
 TS::Type resolve_type(int id, TS::TypeContext &context) {
   auto *t = context.resolve(id);
@@ -64,6 +126,7 @@ Path MrBuilder::make_path(AST::Path &path) {
 Stmt MrBuilder::lower_local(AST::Local &local) {
   Pat pat = make_pat(*local.pat);
 
+
   return std::visit(
       overloaded{[&](AST::InitLocal &init) -> Stmt {
                    return Stmt(LetStmt{.pattern = std::move(pat),
@@ -86,14 +149,27 @@ Stmt MrBuilder::lower_local(AST::Local &local) {
 Stmt MrBuilder::lower_item(AST::Item &item) {
   return std::visit(
       overloaded{[&](AST::FnItem &val) -> Stmt {
+
+
+        push_scope();
+
         auto fn = make_fn(*val.fn);
+        auto scope = pop_scope();
+
+        insert_symbol(item.ident.symbol, SymbolTable::Symbol(
+                        fn,
+                        resolve_type(fn, *type_context), // use correct type info
+                        scope,
+                        SymbolTable::Symbol::Kind::Func
+                      ));
+
+        
 
         PathExpr path_expr{Path{{item.ident.symbol}}};
 
         std::vector<Id> stmts;
 
-        Pat fn_pat{IdentPat{AST::BindingMode::make(), // Default binding mode
-                            item.ident.symbol, std::nullopt}};
+        Pat fn_pat{IdentPat{AST::BindingMode::make(), item.ident.symbol, std::nullopt}};
 
         return Stmt(LetStmt{std::move(fn_pat), fn, std::nullopt});
       }},
@@ -106,17 +182,36 @@ Mr MrBuilder::build(AST::Ast &ast) {
     mr.insert_stmt(std::move(lowered));
   }
 
+  mr.tree = std::move(scopes.back());
+
   return std::move(mr);
 }
 
 Id MrBuilder::make_block(AST::Block &block) {
+
+  push_scope();
+
   Block result;
 
   for (auto &stmt : block.statements) {
     result.statements.push_back(make_stmt(stmt));
   }
 
-  return mr.insert_block(result);
+  auto scope = pop_scope();
+
+  auto id = mr.insert_block(result);
+
+  std::string symbol = "block_" + std::to_string(id);
+
+  insert_symbol(symbol, SymbolTable::Symbol(
+                  id,
+                  resolve_type(id, *type_context), // TODO: correct type 
+                  scope,
+                  SymbolTable::Symbol::Kind::Var
+                ));
+
+    return id;
+
 }
 
 Id MrBuilder::make_fn(AST::Fn &fn) {
@@ -126,8 +221,18 @@ Id MrBuilder::make_fn(AST::Fn &fn) {
     result.body = make_block(*fn.body.value());
   }
 
+
   for (auto &param : fn.params) {
-    result.params.push_back(make_param(param));
+    auto p =  make_param(param);
+    result.params.push_back(p);
+
+    auto &ident = std::get<AST::IdentPat>(param.pat->kind);
+    insert_symbol(ident.identifier.symbol, SymbolTable::Symbol(
+                    p,
+                    resolve_type(param.id, *type_context),
+                    nullptr,
+                    SymbolTable::Symbol::Kind::Var
+                  ));
   }
 
   return mr.insert_fn(result);
@@ -206,10 +311,11 @@ Id MrBuilder::make_expr(AST::Expr &expr) {
 }
 
 Id MrBuilder::make_param(AST::Param &param) {
-  Param p;
-  return mr.insert_param(
-      Param{.pat = make_pat(*param.pat),
-            .type = std::move(resolve_type(param.id, *type_context))});
+  auto p = Param{.pat = make_pat(*param.pat),
+        .type = std::move(resolve_type(param.id, *type_context))};
+
+  
+  return mr.insert_param(std::move(p));
 }
 
 Id MrBuilder::make_stmt(AST::Stmt &stmt) {
@@ -221,6 +327,10 @@ Id MrBuilder::make_stmt(AST::Stmt &stmt) {
                  [&](AST::LetStmt &val) -> Id {
                    auto lowered = lower_local(*val.local);
                    return mr.insert_stmt(std::move(lowered));
+                 },
+                 [&](AST::PrintStmt &val) -> Id {
+                   auto expr_id = make_expr(*val.expr);
+                   return mr.insert_stmt(Stmt(PrintStmt{expr_id}));
                  },
                  [&](AST::EmptyStmt &val) -> Id {
                    auto expr_id = mr.insert_expr(Expr(UnitExpr()));

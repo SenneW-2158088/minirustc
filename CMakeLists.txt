@@ -80,6 +80,8 @@ set(TST
 set(INTERPRETER
     ${CMAKE_CURRENT_SOURCE_DIR}/src/interpreter/Interpreter.h
     ${CMAKE_CURRENT_SOURCE_DIR}/src/interpreter/Interpreter.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/interpreter/Type.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/interpreter/Type.cpp
 )
 
 # Main executable
