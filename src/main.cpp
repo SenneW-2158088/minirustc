@@ -50,10 +50,16 @@ int main(int argc, char *argv[]) {
   auto method = R"(
     fn main() {
         let a = 32;
-        let b = 18;
+        let b = 50;
         let c = a + b;
         a + 3;
-        println!(a);
+
+        if a > b {
+            println!(a);
+        } else {
+          println!(b);
+        }
+        println!(299);
     }
     )";
   driver.parse(method);

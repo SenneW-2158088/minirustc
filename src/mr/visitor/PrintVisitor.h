@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <string>
-#include <variant>
 #include "mr/Mr.h"
 #include "mr/prelude.h"
 #include "mr/visitor/Visitor.h"

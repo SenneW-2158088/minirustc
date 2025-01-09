@@ -353,6 +353,10 @@ block_expr
 
 if_expr
     : IF expr block_expr { $$ = MU<Expr>(Expr::makeIf(ast->getId(), std::move($2), std::move($3))); }
+    | IF expr block_expr ELSE block_expr {
+        auto b_expr = MU<Expr>(Expr::makeBlock(ast->getId(), std::move($5)));
+        $$ = MU<Expr>(Expr::makeIfElse(ast->getId(), std::move($2), std::move($3), std::move(b_expr)));
+    }
     ;
 
 loop_expr

@@ -136,6 +136,23 @@ Value Environment::evaluate_expr(MR::Id &expr) {
                    auto var = get_variable(val.path.to_string());
                    return var;
                  },
+                 [&](MR::IfExpr &val) -> Value {
+
+                   auto cond = evaluate_expr(val.expr);
+                   if(cond.is_bool()) {
+                     auto c = cond.as<bool>();
+                     if(c) {
+                        return evaluate_block(val.block);
+                     }
+                     else {
+                       if(val.elseExpr.has_value()){
+                          return evaluate_expr(val.elseExpr.value());
+                       }
+                     }
+                     return Value();
+                   }
+                   throw RuntimeError("Invalid assignment target");
+                 },
                  [&](MR::BinaryExpr &val) -> Value {
                    auto first_val = evaluate_expr(val.first);
                    auto second_val = evaluate_expr(val.second);
