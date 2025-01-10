@@ -18,9 +18,7 @@ void walk_stmt(Visitor *visitor, Stmt &stmt) {
                  [&visitor](SemiStmt &val) { visitor->visit_expr(*val.expr); },
                  [&visitor](EmptyStmt &val) { return; },
                  [&visitor](PrintStmt &val) { visitor->visit_expr(*val.expr); },
-                 [&visitor](auto &val) { /* TODO */
-                                         return;
-                 }},
+                 [&visitor](auto &val) { /* TODO */ return; }},
       stmt.kind);
 }
 
@@ -62,6 +60,9 @@ void walk_expr(Visitor *visitor, Expr &expr) {
                  [&visitor](BinaryExpr &val) {
                      visitor->visit_expr(*val.first);
                     visitor->visit_expr(*val.second);
+                 },
+                 [&visitor](UnaryExpr &val) {
+                     visitor->visit_expr(*val.expr);
                  },
                  [&visitor](AssignExpr &val) {
                      visitor->visit_expr(*val.first);

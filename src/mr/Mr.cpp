@@ -46,7 +46,7 @@ void SymbolTable::print_internal(int indent = 0) const {
 
     for (const auto& [name, symbol] : symbols) {
         std::cout << indent_str << name << " : ";
-        
+
         switch (symbol->kind) {
             case Symbol::Kind::Func:
                 std::cout << "Function";
@@ -61,7 +61,7 @@ void SymbolTable::print_internal(int indent = 0) const {
                 std::cout << "Block";
                 break;
         }
-        
+
         std::cout << " (id: " << symbol->id << ")";
 
         std::cout << " : " << symbol->type.to_string();
@@ -163,7 +163,7 @@ Stmt MrBuilder::lower_item(AST::Item &item) {
                         SymbolTable::Symbol::Kind::Func
                       ));
 
-        
+
 
         PathExpr path_expr{Path{{item.ident.symbol}}};
 
@@ -273,6 +273,9 @@ Id MrBuilder::make_expr(AST::Expr &expr) {
             return BinaryExpr{val.op, make_expr(*val.first),
                               make_expr(*val.second)};
           },
+          [&](AST::UnaryExpr &val) -> Expr::ExprKind {
+            return UnaryExpr{val.op, make_expr(*val.expr)};
+          },
           [&](AST::AssignExpr &val) -> Expr::ExprKind {
             return AssignExpr{make_expr(*val.first), make_expr(*val.second)};
           },
@@ -302,7 +305,7 @@ Id MrBuilder::make_param(AST::Param &param) {
   auto p = Param{.pat = make_pat(*param.pat),
         .type = std::move(resolve_type(param.id, *type_context))};
 
-  
+
   return mr.insert_param(std::move(p));
 }
 

@@ -65,6 +65,9 @@ void walk_expr(Visitor *visitor, Expr &expr) {
                  },
                  [&visitor](ContinueExpr &val) {},
                  [&visitor](LoopExpr &val) { visitor->visit_block(val.block); },
+                 [&visitor](UnaryExpr &val) {
+                     visitor->visit_expr(val.expr);
+                 },
                  [&visitor](BinaryExpr &val) {
                      visitor->visit_expr(val.first);
                     visitor->visit_expr(val.second);

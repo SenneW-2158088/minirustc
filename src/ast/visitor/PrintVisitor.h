@@ -217,6 +217,5 @@ public:
       print_indent();
       std::cout << "}\n";
   }
-
 };
 } // namespace MRC::AST

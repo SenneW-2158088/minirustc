@@ -3,6 +3,7 @@
 #include <variant>
 #include <vector>
 
+#include "ast/Binop.h"
 #include "ast/prelude.h"
 #include "typechecking/Type.h"
 #include "util/util.h"
@@ -89,6 +90,11 @@ struct BinaryExpr {
   U<Expr> second;
 };
 
+struct UnaryExpr {
+  UnOp op;
+  U<Expr> expr;
+};
+
 struct AssignExpr {
   U<Expr> first;
   U<Expr> second;
@@ -113,7 +119,7 @@ struct ReturnExpr{
 struct Expr {
   using ExprKind = std::variant<LitExpr, ExprExpr, LetExpr, BlockExpr,
                                 WhileExpr, IfExpr, LoopExpr, CallExpr, PathExpr,
-                                BinaryExpr, AssignExpr, AssignOpExpr,
+                                BinaryExpr, UnaryExpr, AssignExpr, AssignOpExpr,
                                 BreakExpr, ReturnExpr, ContinueExpr>;
   ExprKind kind;
   TS::CheckType type;
@@ -164,6 +170,10 @@ public:
   }
   static Expr makeBinary(Id id, BinOp op, U<Expr> first, U<Expr> second) {
     return Expr(id, BinaryExpr(std::move(op), std::move(first), std::move(second)));
+  }
+
+  static Expr makeUnary(Id id, UnOp op, U<Expr> expr) {
+    return Expr(id, UnaryExpr(std::move(op), std::move(expr)));
   }
 
   static Expr makeAssign(Id id, U<Expr> first, U<Expr> second) {

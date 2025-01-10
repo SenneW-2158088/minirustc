@@ -10,55 +10,111 @@
 
 #include <cstdio>
 #include <cwchar>
+#include <fstream>
 
-void type_check(MRC::AST::Ast *ast) {
-  MRC::TS::TypeChecker typechecker{};
-
-  MRC::AST::PrintVisitor printer{typechecker.context};
-  MRC::MR::MrBuilder builder(typechecker.context);
-
-
-  try {
-    for (auto &body : ast->items) {
-      typechecker.visit_item(body);
+std::string read_file(std::string &filename) {
+    std::ifstream input_file(filename);
+    if (!input_file.is_open()) {
+        std::cerr << "Error: Could not open file " << filename << "\n";
+        exit(1);
     }
 
+    std::string code((std::istreambuf_iterator<char>(input_file)),
+                    std::istreambuf_iterator<char>());
+    input_file.close();
+    return code;
+}
+
+U<MRC::AST::Ast> parse_code(const std::string& code) {
+    MRC::Driver driver{};
+    driver.parse(code);
+    return std::move(driver.get());
+}
+
+void type_check_ast(MRC::AST::Ast* ast, MRC::TS::TypeChecker& typechecker) {
+    for (auto& item : ast->items) {
+        typechecker.visit_item(item);
+    }
+    // Uncomment to debug type checking
     // typechecker.context->print_context();
+}
 
+MRC::MR::Mr build_mr(MRC::AST::Ast* ast, MRC::TS::TypeChecker& typechecker) {
+    MRC::MR::MrBuilder builder(typechecker.context);
     MRC::MR::Mr mr = builder.build(*ast);
-    // MRC::MR::PrintVisitor mr_printer(&mr);
-    // mr_printer.print();
-    // mr.tree->print();
+    return mr;
+}
 
+void interpret_mr(MRC::MR::Mr& mr, MRC::TS::TypeChecker& typechecker, std::string& entry_point) {
     MRC::INTERP::Interpreter interpreter(typechecker.context, mr);
+    interpreter.interp(entry_point);
+}
 
-    auto entry = std::string("main");
-    interpreter.interp(entry);
-    
-  } catch (MRC::TS::TypeError err) {
-    std::cout << err.what() << std::endl;
-  }
+void process_program(const std::string& code, bool verbose, std::string entry) {
+    try {
+        P<MRC::AST::Ast> ast = parse_code(code);
+
+        MRC::TS::TypeChecker typechecker{};
+        type_check_ast(ast.get(), typechecker);
+
+        MRC::AST::PrintVisitor printer{typechecker.context};
+        // if(verbose) {
+        //   for(auto &item : ast->items) {
+        //     printer.visit_item(item);
+        //   }
+        // }
+
+        MRC::MR::Mr mr = build_mr(ast.get(), typechecker);
+        if(verbose) {
+          MRC::MR::PrintVisitor mr_printer(&mr);
+          mr_printer.print();
+          mr.tree->print();
+        }
+
+        interpret_mr(mr, typechecker, entry);
+
+    } catch (const MRC::TS::TypeError& err) {
+        std::cerr << "Type Error: " << err.what() << std::endl;
+        exit(1);
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        exit(1);
+    }
+}
+
+void print_usage() {
+  std::cout << "Usage: mrc" << " [-v] [-e entry] <input_file>\n";
+  exit(-1);
 }
 
 int main(int argc, char *argv[]) {
+  // Flags
+  std::string entry = "main"; // Default entry
+  bool verbose = false;
+  std::string filename;
 
-  MRC::Driver driver{};
-  auto method = R"(
-    
-    fn fibonacci(n: i32) -> i32 {
-       if n == 0 { return 0; }
-       if n == 1 { return 1; }
-   
-       return fibonacci(n - 1) + fibonacci(n - 2);
-    }
+  if(argc < 2) print_usage();
+  for (int i = 1; i < argc; i++) {
+      std::string arg = argv[i];
+      if (arg == "-v") {
+          verbose = true;
+          continue;
+      }
+      if (arg == "-e" && i + 1 < argc) {
+          entry = argv[++i];
+          continue;
+      }
+      if (filename.empty()) {
+          filename = arg;
+      }
+  }
 
-    fn main() {
-      let b = fibonacci(10);
-      println!(b);
-    }
-    )";
-  driver.parse(method);
-  type_check(driver.ast());
+  if (filename.empty()) {
+    print_usage();
+  }
+
+  std::string program = read_file(filename);
+  process_program(program, verbose, entry);
 
   return 0;
 }

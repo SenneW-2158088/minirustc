@@ -49,6 +49,7 @@ struct Value {
   }
 
   static Value binop(AST::BinOp op, Value &left, Value& right);
+  static Value unop(AST::UnOp op, Value &val);
 };
 
 struct Variable {

@@ -36,10 +36,24 @@ namespace MRC::INTERP {
                 }
                 kind = str;
             }
-        }, lit.kind); 
+        }, lit.kind);
   }
 
-    Value Value::binop(AST::BinOp op, Value &left, Value &right) {
+  Value Value::unop(AST::UnOp op, Value &val) {
+      return std::visit(overloaded{
+          [&](const AST::Not &) {
+              if (val.is_bool()) {
+                  return Value(!val.as<bool>());
+              }
+              if (val.is_int()) {
+                  return Value(~val.as<int>());  // Bitwise NOT for integers
+              }
+              throw std::runtime_error("Invalid type for NOT operation");
+          }
+      }, op.kind);
+  }
+
+  Value Value::binop(AST::BinOp op, Value &left, Value &right) {
         return std::visit(overloaded{
             [&](const AST::Add&) {
                 if (left.is_int() && right.is_int()) {
@@ -85,6 +99,13 @@ namespace MRC::INTERP {
                     }
                 }
                 throw std::runtime_error("Invalid types for division");
+            },
+            [&](const AST::Mod&) {
+                if (left.is_int() && right.is_int()) {
+                    if (right.as<int>() == 0) throw std::runtime_error("Modulo by zero");
+                    return Value(left.as<int>() % right.as<int>());
+                }
+                throw std::runtime_error("Invalid types for modulo operation");
             },
             [&](const AST::And&) {
                 if (left.is_bool() && right.is_bool()) {

@@ -23,6 +23,9 @@ LETTER          [a-zA-Z_]
 ESC_SEQ         \\([\"\\nrt0]|x[0-9a-fA-F]{2}|u\{[0-9a-fA-F]{1,6}\})
 STR_CHAR        [^\"\\\n]|{ESC_SEQ}
 
+LINE_COMMENT    \/\/[^\n]*
+BLOCK_COMMENT   \/\*([^*]|\*+[^*/])*\*+\/
+
 /* Literal definitions */
 BIN_LIT         0b{BIN_DIGIT}+
 OCT_LIT         0o{OCT_DIGIT}+
@@ -59,22 +62,19 @@ FLOAT_SUFFIX    (f32|f64)
 "*"         { return MRC::Token(yytext, "", Token::TOKEN_STAR, m_driver.location); }
 "/"         { return MRC::Token(yytext, "", Token::TOKEN_SLASH, m_driver.location); }
 "%"         { return MRC::Token(yytext, "", Token::TOKEN_PERCENT, m_driver.location); }
-"^"         { return MRC::Token(yytext, "", Token::TOKEN_CARET, m_driver.location); }
 "="         { return MRC::Token(yytext, "", Token::TOKEN_EQ, m_driver.location); }
+
 "=="         { return MRC::Token(yytext, "", Token::TOKEN_EQEQ, m_driver.location); }
 "+="        { return MRC::Token(yytext, "", Token::TOKEN_PLUSEQ, m_driver.location); }
 "-="        { return MRC::Token(yytext, "", Token::TOKEN_MINUSEQ, m_driver.location); }
 "*="        { return MRC::Token(yytext, "", Token::TOKEN_STAREQ, m_driver.location); }
 "/="        { return MRC::Token(yytext, "", Token::TOKEN_SLASHEQ, m_driver.location); }
 "%="        { return MRC::Token(yytext, "", Token::TOKEN_PERCENTEQ, m_driver.location); }
-"^="        { return MRC::Token(yytext, "", Token::TOKEN_CARETEQ, m_driver.location); }
+
 "!"         { return MRC::Token(yytext, "", Token::TOKEN_NOT, m_driver.location); }
-"&"         { return MRC::Token(yytext, "", Token::TOKEN_AND, m_driver.location); }
-"|"         { return MRC::Token(yytext, "", Token::TOKEN_OR, m_driver.location); }
+
 "&&"        { return MRC::Token(yytext, "", Token::TOKEN_ANDAND, m_driver.location); }
 "||"        { return MRC::Token(yytext, "", Token::TOKEN_OROR, m_driver.location); }
-"<<"        { return MRC::Token(yytext, "", Token::TOKEN_SHL, m_driver.location); }
-">>"        { return MRC::Token(yytext, "", Token::TOKEN_SHR, m_driver.location); }
 "!="        { return MRC::Token(yytext, "", Token::TOKEN_NOTEQ, m_driver.location); }
 "&="        { return MRC::Token(yytext, "", Token::TOKEN_ANDEQ, m_driver.location); }
 "|="        { return MRC::Token(yytext, "", Token::TOKEN_OREQ, m_driver.location); }
@@ -82,6 +82,7 @@ FLOAT_SUFFIX    (f32|f64)
 "<"         { return MRC::Token(yytext, "", Token::TOKEN_LT, m_driver.location); }
 ">="        { return MRC::Token(yytext, "", Token::TOKEN_GTEQ, m_driver.location); }
 "<="        { return MRC::Token(yytext, "", Token::TOKEN_LTEQ, m_driver.location); }
+
 ","         { return MRC::Token(yytext, "", Token::TOKEN_COMMA, m_driver.location); }
 ";"         { return MRC::Token(yytext, "", Token::TOKEN_SEMI, m_driver.location); }
 ":"         { return MRC::Token(yytext, "", Token::TOKEN_COLON, m_driver.location); }
@@ -111,6 +112,9 @@ FLOAT_SUFFIX    (f32|f64)
 "println!"     { return MRC::Token(yytext, "", Token::TOKEN_PRINT, m_driver.location); }
 
 "::"     { return MRC::Token(yytext, "", Token::TOKEN_SCOPE_RESOLUTION, m_driver.location); }
+
+{LINE_COMMENT}  { /* Ignore line comments */ }
+{BLOCK_COMMENT} { /* Ignore block comments */ }
 
 {IDENTIFIER} {
     return MRC::Token(yytext, "", Token::TOKEN_IDENTIFIER, m_driver.location);

@@ -59,8 +59,7 @@ struct TypeContext {
   std::map<int, CheckType> ranks;
   int rank_counter = 0;
 
-  std::map<int, void *>
-      nodes; // reference to nodes, quick hack for function type checking
+  std::map<int, void *> nodes; // reference to nodes, quick hack for function type checking
 
   void insert(AST::Id id, CheckType type, void *node_ptr) {
     if (mapping.find(id) != mapping.end()) {
@@ -85,15 +84,35 @@ struct TypeContext {
       if (rank == right_rank)
         rank = left_rank;
     }
-
-    // std::cout << right << " points to rank " << left_rank << " -> "
-    //           << resolve(left)->to_string() << std::endl;
   }
 
   void update(AST::Id id, CheckType type) {
     auto *stored = resolve(id);
     *stored = std::move(type);
   }
+
+  void unionize(AST::Id left, CheckType type) {
+    auto *left_type = resolve(left);
+    // If types are equal merge ranks
+    if (left_type->equals(type)) {
+      update(left, type);
+      return;
+    }
+
+    // Try to unify types
+    if (left_type->unionize(type)) {
+      update(left, type);
+      return;
+    }
+
+    if (type.unionize(*left_type)) {
+      update(left, type);
+      return;
+    }
+
+    throw TypeError("Types do not match: " + left_type->to_string() + " and " + type.to_string());
+  }
+
 
   void unionize(AST::Id left, AST::Id right) {
     auto *left_type = resolve(left);
@@ -178,7 +197,6 @@ private:
   }
 
   AST::Id lookup_symbol(const std::string &symbol) {
-    std::cout << "lookup up symbol " << symbol << std::endl;
     for (auto it = scopes.rbegin(); it != scopes.rend(); ++it) {
       if (auto id = find_symbol_in_scope(symbol, *it)) {
         return *id;
@@ -191,7 +209,6 @@ private:
   void push_scope() { scopes.push_back(Scope()); }
 
   void pop_scope() {
-    scopes.back().print_scope();
     scopes.pop_back();
   }
 
@@ -266,7 +283,15 @@ public:
               }
             },
             [&](AST::IfExpr &if_expr) {
-              context->unionize(expr.id, if_expr.expr->id);
+              context->unionize(if_expr.expr->id, CheckType::makeConcrete(Type::makeBool()));
+
+              if(if_expr.elseExpr.has_value()) {
+                context->unionize(if_expr.expr->id, if_expr.elseExpr.value()->id);
+              }
+
+              // if(if_expr.block->expr().has_value()) {
+              //   context->unionize(expr.id, if_expr.block->expr().value()->id);
+              // }
             },
             [&](AST::ExprExpr &expr_expr) {
               context->unionize(expr.id, expr_expr.expr->id);
@@ -322,7 +347,16 @@ public:
             },
             [&](AST::BinaryExpr &bin) {
               context->unionize(bin.first->id, bin.second->id);
-              context->unionize(expr.id, bin.first->id);
+
+              if(bin.op.is_comparison()) {
+                context->unionize(expr.id, CheckType::makeConcrete(Type::makeBool()));
+              }else {
+                context->unionize(expr.id, bin.first->id);
+              }
+
+            },
+            [&](AST::UnaryExpr &assign) {
+              context->unionize(expr.id, assign.expr->id);
             },
             [&](AST::AssignExpr &assign) {
               context->unionize(assign.first->id, assign.second->id);

@@ -158,7 +158,6 @@ public:
 
   P<SymbolTable::Symbol> insert_symbol(std::string &name, SymbolTable::Symbol symbol) {
     auto result = scopes.back()->insert(name, symbol);
-    std::cout << "inserting symbol: " << name << std::endl;
     if(result.has_value()) return result.value();
     throw std::runtime_error("symbol already exists");
   }
@@ -171,8 +170,8 @@ public:
     }
     throw std::runtime_error("failed to create subscope");
   }
-  
-  
+
+
   Id make_block(AST::Block &block);
   Id make_expr(AST::Expr &expr);
   Id make_fn(AST::Fn &expr);

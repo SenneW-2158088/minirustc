@@ -20,7 +20,6 @@ void Flow::stop() {}
 void Environment::print(int depth) const {
   std::string indent(depth * 2, ' ');
 
-  // Print variables in current scope
   std::cout << indent << "Variables:\n";
   for (const auto &[name, var] : variables) {
     std::cout << indent << "  " << name << ": ";
@@ -32,7 +31,6 @@ void Environment::print(int depth) const {
     std::cout << (var->is_mutable ? " (mut)" : "") << "\n";
   }
 
-  // Recursively print child environments
   for (const auto &child : children) {
     std::cout << indent << "Child Environment:\n";
     child->print(depth + 1);
@@ -41,9 +39,9 @@ void Environment::print(int depth) const {
 
 void Environment::declare_variable(const std::string &name, bool is_mutable) {
   if (variables.find(name) != variables.end()) {
-    throw RuntimeError("Variable '" + name +
-                       "' already declared in this scope");
+    throw RuntimeError("Variable '" + name + "' already declared in this scope");
   }
+
   variables[name] = std::make_shared<Variable>();
   variables[name]->is_mutable = is_mutable;
 }
@@ -164,7 +162,7 @@ Value Environment::evaluate_expr(MR::Id &expr) {
                  },
                  [&](MR::ReturnExpr &val) -> Value {
                    if(val.expr.has_value()) {
-                     Value v = evaluate_expr(val.expr.value()); 
+                     Value v = evaluate_expr(val.expr.value());
                      control = ControlFlow(v, ControlFlow::Type::Return);
                      return v;
                    }
@@ -193,6 +191,10 @@ Value Environment::evaluate_expr(MR::Id &expr) {
                    auto second_val = evaluate_expr(val.second);
                    return Value::binop(val.op, first_val, second_val);
                  },
+                 [&](MR::UnaryExpr &val) -> Value {
+                   auto first_val = evaluate_expr(val.expr);
+                   return Value::unop(val.op, first_val);
+                 },
                  [&](MR::AssignExpr &val) -> Value {
                    auto second_val = evaluate_expr(val.second);
 
@@ -213,8 +215,8 @@ Value Environment::evaluate_expr(MR::Id &expr) {
                    if (auto path = mr.get_expr(val.first)) {
                      if (std::holds_alternative<MR::PathExpr>(path->kind)) {
                        auto &path_expr = std::get<MR::PathExpr>(path->kind);
-                       set_variable(path_expr.path.to_string(), second_val);
-                       return second_val;
+                       set_variable(path_expr.path.to_string(), result);
+                       return result;
                      }
                    }
                    throw RuntimeError("Invalid assignment target");
@@ -237,23 +239,23 @@ Value Environment::evaluate_stmt(MR::Id &stmt) {
             return evaluate_expr(val.expr);
           },
           [&](MR::LetStmt &val) -> Value {
-            if (val.initializer.has_value()) {
-              auto init_val = evaluate_expr(val.initializer.value());
-              if (std::holds_alternative<MR::IdentPat>(val.pattern.kind)) {
-                auto &ident = std::get<MR::IdentPat>(val.pattern.kind);
-                declare_variable(ident.identifier, ident.binding.isMutable());
+            if (std::holds_alternative<MR::IdentPat>(val.pattern.kind)) {
+              auto &ident = std::get<MR::IdentPat>(val.pattern.kind);
+              declare_variable(ident.identifier, ident.binding.isMutable());
+              if (val.initializer.has_value()) {
+                auto init_val = evaluate_expr(val.initializer.value());
                 set_variable(ident.identifier, init_val);
-              } else {
-                throw std::runtime_error("invalid identifier in let stmt");
               }
+            }
+            else {
+              throw std::runtime_error("invalid identifier in let stmt");
             }
             return Value(); // return unit
           },
-          // Add other statement handlers
           [&](MR::PrintStmt &val) -> Value {
               auto print_val = evaluate_expr(val.expr);
               std::cout << "[MRC::OUTPUT] " << print_val.to_string() << std::endl;
-              return Value(); // return unit
+              return Value();
           },
           [&](auto &) -> Value {
             throw std::runtime_error("Unhandled statement type");
@@ -277,10 +279,13 @@ Value Environment::evaluate_block(MR::Id &block) {
     throw std::runtime_error("Block node not found");
   }
 
+  P<Environment> be = std::make_shared<Environment>(Environment(this, mr, this->symbol_table));
+  children.push_back(be);
+
   Value last_value{};
   for (auto &stmt : node->statements) {
     if(control.type == ControlFlow::Type::None) {
-       last_value = evaluate_stmt(stmt);
+       last_value = be->evaluate_stmt(stmt);
     }
     else {
       // return control.value;

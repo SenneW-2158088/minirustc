@@ -43,7 +43,7 @@ struct ControlFlow {
 };
 
 struct Block {
-  
+
 };
 
 struct Environment {
@@ -87,9 +87,10 @@ private:
   MR::Mr &mr;
 public:
   Interpreter(P<TS::TypeContext> context, MR::Mr& mr);
-  
+
   // Start the interpreter
   void interp(std::string &entry);
+  void print() { environment->print(); };
 };
 
 } // namespace MRC::INTERP

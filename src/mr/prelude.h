@@ -3,6 +3,7 @@
 #include <string>
 #include <variant>
 
+#include "ast/Binop.h"
 #include "ast/prelude.h"
 #include "typechecking/Type.h"
 
@@ -163,6 +164,11 @@ struct CallExpr {
   std::vector<Id> params;
 };
 
+struct UnaryExpr {
+  AST::UnOp op;
+  Id expr;
+};
+
 struct BinaryExpr {
   AST::BinOp op;
   Id first;
@@ -195,7 +201,7 @@ struct UnitExpr{};
 struct Expr {
   using ExprKind =
       std::variant<LitExpr, ExprExpr, LetExpr, BlockExpr, WhileExpr, IfExpr,
-                   LoopExpr, CallExpr, PathExpr, BinaryExpr, AssignExpr,
+                   LoopExpr, CallExpr, PathExpr, UnaryExpr, BinaryExpr, AssignExpr,
                    AssignOpExpr, BreakExpr, ReturnExpr, ContinueExpr, UnitExpr>;
   ExprKind kind;
   Id id;

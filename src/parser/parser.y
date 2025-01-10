@@ -67,12 +67,12 @@
 %token <MRC::Token> TRUE FALSE
 
 // Punctuation
-%token <MRC::Token> PLUS MINUS STAR SLASH PERCENT CARET
-%token <MRC::Token> EQ NE
-%token <MRC::Token> PLUSEQ MINUSEQ STAREQ SLASHEQ PERCENTEQ CARETEQ
-%token <MRC::Token> NOT AND OR ANDAND OROR SHL SHR
+%token <MRC::Token> PLUS MINUS STAR SLASH PERCENT
+%token <MRC::Token> EQ
+%token <MRC::Token> PLUSEQ MINUSEQ STAREQ SLASHEQ PERCENTEQ
 %token <MRC::Token> EQEQ NOTEQ ANDEQ OREQ
 %token <MRC::Token> GT LT GTEQ LTEQ
+%token <MRC::Token> NOT ANDAND OROR
 %token <MRC::Token> COMMA SEMI COLON RIGHT_ARROW LEFT_ARROW
 %token <MRC::Token> LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE
 
@@ -138,6 +138,18 @@
 %type <AST::Fn::Body>               block
 %type <U<AST::Local>>               local
 
+%left OROR
+%left ANDAND
+%left EQEQ NOTEQ
+%left LT LE GT GE
+%left PLUS MINUS
+%left STAR SLASH PERCENT
+%right NOT
+%left LPAREN RPAREN
+
+%nonassoc EQ PLUSEQ MINUSEQ STAREQ SLASHEQ PERCENTEQ
+%nonassoc ELSE
+
 %verbose
 %define parse.trace
 %define parse.error verbose
@@ -160,7 +172,7 @@ items
     ;
 
 statements
-    : 
+    :
     | statement {
         $$.push_back(std::move($1));
     }
@@ -316,8 +328,8 @@ expr.opt
 
 exprs
     :
-    | expr { 
-        $$.push_back(std::move($1)); 
+    | expr {
+        $$.push_back(std::move($1));
     }
     | exprs COMMA expr {
         $$ = std::move($1);
@@ -383,12 +395,26 @@ operator_expr
     | expr MINUS expr           { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeSub(), std::move($1), std::move($3))); }
     | expr STAR expr            { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeMul(), std::move($1), std::move($3))); }
     | expr SLASH expr           { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeDiv(), std::move($1), std::move($3))); }
+    | expr PERCENT expr         { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeMod(), std::move($1), std::move($3))); }
+
     | expr EQ expr              { $$ = MU<Expr>(Expr::makeAssign(ast->getId(), std::move($1), std::move($3))); }
+    | expr PLUSEQ expr          { $$ = MU<Expr>(Expr::makeAssignOp(ast->getId(), BinOp::makeAdd(), std::move($1), std::move($3))); }
+    | expr MINUSEQ expr         { $$ = MU<Expr>(Expr::makeAssignOp(ast->getId(), BinOp::makeSub(), std::move($1), std::move($3))); }
+    | expr STAREQ expr          { $$ = MU<Expr>(Expr::makeAssignOp(ast->getId(), BinOp::makeMul(), std::move($1), std::move($3))); }
+    | expr SLASHEQ expr         { $$ = MU<Expr>(Expr::makeAssignOp(ast->getId(), BinOp::makeDiv(), std::move($1), std::move($3))); }
+    | expr PERCENTEQ expr       { $$ = MU<Expr>(Expr::makeAssignOp(ast->getId(), BinOp::makeMod(), std::move($1), std::move($3))); }
+
     | expr EQEQ expr            { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeEq(), std::move($1), std::move($3))); }
+    | expr NOTEQ expr           { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeNe(), std::move($1), std::move($3))); }
     | expr GT expr              { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeGt(), std::move($1), std::move($3))); }
     | expr LT expr              { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeLt(), std::move($1), std::move($3))); }
     | expr GTEQ expr            { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeGe(), std::move($1), std::move($3))); }
     | expr LTEQ expr            { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeLe(), std::move($1), std::move($3))); }
+    | expr ANDAND expr          { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeAnd(), std::move($1), std::move($3))); }
+    | expr OROR expr            { $$ = MU<Expr>(Expr::makeBinary(ast->getId(), BinOp::makeOr(), std::move($1), std::move($3))); }
+
+
+    | NOT expr                  { $$ = MU<Expr>(Expr::makeUnary(ast->getId(), UnOp::makeNot(), std::move($2))); }
     ;
 %%
 

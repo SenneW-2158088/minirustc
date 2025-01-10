@@ -23,7 +23,7 @@ public:
   bool parse(const std::string &input);
   bool parse(std::istream &input);
 
-  AST::Ast* ast() { return _ast.get(); }
+  U<AST::Ast> get() { return std::move(_ast); }
   void update_location(unsigned int line, unsigned int col) {
       location.begin.line = line;
       location.begin.column = col;
