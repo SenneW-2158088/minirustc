@@ -1,8 +1,6 @@
 #pragma once
 
-#include "ast/Expr.h"
 #include "ast/prelude.h"
-#include "ast/struct/Block.h"
 #include "typechecking/Type.h"
 #include <optional>
 
@@ -48,7 +46,7 @@ struct Fn {
     else {
       return_type = MU<TS::CheckType>(TS::CheckType::makeConcrete(TS::Type::makeVoid()));
     }
-    
+
     return TS::Type::makeFunction(std::move(param_types), std::move(return_type));
   }
 };

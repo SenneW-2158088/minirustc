@@ -35,20 +35,6 @@ public:
 
   PrintVisitor(P<TS::TypeContext> context) : context(context) {}
 
-  void visit_body(Body &body) override {
-    
-    print_indent();
-    std::cout << "Body{\n";
-
-    print_indent();
-    std::cout << "id: " << body.id << std::endl;
-
-    {
-      ScopeGuard guard(indent_level);
-      Visitor::visit_body(body);
-    }
-  }
-
   void visit_stmt(Stmt &stmt) override {
     print_indent();
     std::cout << "Stmt {\n";

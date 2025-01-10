@@ -12,7 +12,6 @@ using ExprPtr = U<Expr>;
 typedef int Index;
 
 struct Ast {
-  std::vector<Body> bodies{};
   std::vector<Item> items{};
   std::vector<Stmt> statements{};
   std::vector<Expr> expressions{};
@@ -34,11 +33,6 @@ public:
   Index insert(Expr expr) {
     expressions.push_back(std::move(expr));
     return expressions.size() - 1;
-  }
-
-  Index insert(Body body) {
-    bodies.push_back(std::move(body));
-    return bodies.size() - 1;
   }
 
   Id getId() {

@@ -1,7 +1,7 @@
 #include "typechecking/Type.h"
 #include "ast/struct/Fn.h"
-#include <format>
 #include <iostream>
+#include <string>
 
 namespace MRC::TS {
 
@@ -175,10 +175,10 @@ std::string MRC::TS::Type::to_string() const {
   return std::visit(
       overloaded{
           [](const IntType &a) -> std::string {
-            return std::format("int ({},{})", a.bits, a.is_signed);
+            return "int ({" + std::to_string(a.bits) +"},{ " + std::to_string(a.is_signed) +"})";
           },
           [](const FloatType &a) -> std::string {
-            return std::format("float ({})", a.bits);
+            return "float ({" + std::to_string(a.bits) +"})";
           },
           [](const BoolType &) -> std::string { return "bool"; },
           [](const StringType &) -> std::string { return "string"; },
