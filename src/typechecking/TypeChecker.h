@@ -269,7 +269,7 @@ public:
               }
             },
             [&](AST::WhileExpr &while_expr) {
-              context->unionize(expr.id, while_expr.expr->id);
+              context->unionize(while_expr.expr->id, CheckType::makeConcrete(Type::makeBool()));
 
               auto b_expr = while_expr.block->expr();
               if (b_expr.has_value()) {
@@ -285,34 +285,39 @@ public:
             [&](AST::IfExpr &if_expr) {
               context->unionize(if_expr.expr->id, CheckType::makeConcrete(Type::makeBool()));
 
-              if(if_expr.elseExpr.has_value()) {
-                context->unionize(if_expr.expr->id, if_expr.elseExpr.value()->id);
+              if(if_expr.block->expr().has_value()) {
+                if(if_expr.elseExpr.has_value()) {
+                  context->unionize(if_expr.block->expr().value()->id, if_expr.elseExpr.value()->id);
+                }
               }
-
-              // if(if_expr.block->expr().has_value()) {
-              //   context->unionize(expr.id, if_expr.block->expr().value()->id);
-              // }
             },
             [&](AST::ExprExpr &expr_expr) {
               context->unionize(expr.id, expr_expr.expr->id);
             },
             [&](AST::CallExpr &call) {
               std::vector<U<CheckType>> param_types;
+
               for (auto &param : call.params) {
                 auto param_type = MU<CheckType>(*context->resolve(param->id));
                 param_types.push_back(std::move(param_type));
               }
-              auto return_type =
-                  MU<CheckType>(CheckType::makeVar(Type::makeUnset()));
 
-              context->update(expr.id, CheckType::makeVar(Type::makeFunction(
-                                          std::move(param_types),
-                                          std::move(return_type))));
+              if(std::holds_alternative<ConcreteType>(expr.type.kind)) {
+                auto conc  = std::get<ConcreteType>(expr.type.kind);
+                if(std::holds_alternative<FunctionType>(conc.type.kind)) {
+                  auto ft = std::get<FunctionType>(conc.type.kind);
+                  context->update(expr.id, *ft.return_type);
+                }
+              }
+              if(std::holds_alternative<VarType>(expr.type.kind)) {
+                auto conc  = std::get<VarType>(expr.type.kind);
+                if(std::holds_alternative<FunctionType>(conc.type.kind)) {
+                  auto ft = std::get<FunctionType>(conc.type.kind);
+                  context->update(expr.id, *ft.return_type);
+                }
+              }
 
-              context->unionize(expr.id, call.expr->id);
-
-              auto *fn_node =
-                  static_cast<AST::Item *>(context->nodes[call.expr->id]);
+              auto *fn_node = static_cast<AST::Item *>(context->nodes[call.expr->id]);
               if (!fn_node) {
                 throw TypeError("Called expression is not a function");
               }

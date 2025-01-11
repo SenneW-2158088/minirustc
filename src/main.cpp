@@ -58,16 +58,19 @@ void process_program(const std::string& code, bool verbose, std::string entry) {
         type_check_ast(ast.get(), typechecker);
 
         MRC::AST::PrintVisitor printer{typechecker.context};
-        // if(verbose) {
-        //   for(auto &item : ast->items) {
-        //     printer.visit_item(item);
-        //   }
-        // }
+        if(verbose) {
+          std::cout << "========== AST =============" << std::endl;
+          for(auto &item : ast->items) {
+            printer.visit_item(item);
+          }
+        }
 
         MRC::MR::Mr mr = build_mr(ast.get(), typechecker);
         if(verbose) {
+          std::cout << "========== MR =============" << std::endl;
           MRC::MR::PrintVisitor mr_printer(&mr);
           mr_printer.print();
+          std::cout << "========== symbol tree =============" << std::endl;
           mr.tree->print();
         }
 

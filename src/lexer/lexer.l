@@ -31,7 +31,7 @@ BIN_LIT         0b{BIN_DIGIT}+
 OCT_LIT         0o{OCT_DIGIT}+
 HEX_LIT         0x{HEX_DIGIT}+
 DEC_LIT         {DEC_DIGIT}+
-STR_LIT         \"({STR_CHAR})*\"
+STR_LIT         \"([^\\\"]|\\.)*\"
 
 /* Improved float pattern */
 INTEGER         {DEC_LIT}|{HEX_LIT}|{OCT_LIT}|{BIN_LIT}
@@ -116,6 +116,11 @@ FLOAT_SUFFIX    (f32|f64)
 {LINE_COMMENT}  { /* Ignore line comments */ }
 {BLOCK_COMMENT} { /* Ignore block comments */ }
 
+{STR_LIT} {
+    symbol = yytext;
+    return MRC::Token(yytext, "", Token::TOKEN_STR_LITERAL, m_driver.location);
+}
+
 {IDENTIFIER} {
     return MRC::Token(yytext, "", Token::TOKEN_IDENTIFIER, m_driver.location);
 }
@@ -132,10 +137,6 @@ FLOAT_SUFFIX    (f32|f64)
     return MRC::Token(yytext, "", Token::TOKEN_FLOAT_LITERAL, m_driver.location);
 }
 
-{STRING} {
-    symbol = yytext;
-    return MRC::Token(yytext, "", Token::TOKEN_STR_LITERAL, m_driver.location);
-}
 
 [ \t\n]+        { /* Ignore whitespace */ }
 .               { /* Error case */

@@ -127,7 +127,6 @@ public:
       std::cout << local->id << std::endl;
     }
 
-    std::cout << "Params" << std::endl;
     for (auto &param : params) {
       std::cout << param->id << std::endl;
     }

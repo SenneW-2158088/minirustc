@@ -89,7 +89,7 @@ Lit MrBuilder::make_lit(AST::Lit &lit) {
   result.symbol = lit.symbol;
   result.type = resolve_type(lit.id, *type_context);
 
-  std::visit(
+  result.kind = std::visit(
       overloaded{
           [](AST::IntegerLit &) -> Lit::LiteralKind { return IntegerLit{}; },
           [](AST::BooleanLit &) -> Lit::LiteralKind { return BooleanLit{}; },

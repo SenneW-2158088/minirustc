@@ -55,8 +55,17 @@ struct Environment {
 
     std::map<std::string, P<Variable>> variables;
 
-    Opt<Flow> flow;
-    ControlFlow control;
+    Opt<ControlFlow> control;
+
+    // Control flow
+    void control_active();
+    void control_disable();
+
+    void control_continue();
+    void control_break(Opt<Value> val);
+    void control_return(Opt<Value> val);
+
+    bool control_should_stop();
 
     // Evaluate an expression
     Value evaluate_fn(MR::Id fn);

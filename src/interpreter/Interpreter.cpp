@@ -4,11 +4,12 @@
 #include "typechecking/TypeChecker.h"
 #include <iterator>
 #include <memory>
+#include <optional>
+#include <stdexcept>
 #include <unistd.h>
 #include <variant>
 
 namespace MRC::INTERP {
-// Flow
 void Flow::entry() {}
 
 void Flow::exit() {}
@@ -16,6 +17,65 @@ void Flow::exit() {}
 void Flow::next() {}
 
 void Flow::stop() {}
+
+void Environment::control_active() { control = ControlFlow(); }
+void Environment::control_disable() { control = std::nullopt; }
+
+void Environment::control_continue() {
+  if(control.has_value()) {
+    control.value().type = ControlFlow::Type::Continue;
+    return;
+  }
+
+  if(parent) {
+    parent->control_continue();
+    return;
+  }
+  throw std::runtime_error("Could not find valid flow for continue");
+}
+
+bool Environment::control_should_stop() {
+  if(control.has_value()) {
+    return control.value().type != ControlFlow::Type::None;
+  }
+
+  if(parent) {
+    return parent->control_should_stop();
+  }
+
+  return false;
+}
+
+void Environment::control_break(Opt<Value> val) {
+  if(control.has_value()) {
+    control.value().type = ControlFlow::Type::Break;
+    control.value().value = val;
+    return;
+  }
+
+  if(parent) {
+    parent->control_break(val);
+    return;
+  }
+
+  throw std::runtime_error("Could not find valid flow for break");
+
+}
+
+void Environment::control_return(Opt<Value> val) {
+  if(control.has_value()) {
+    control.value().type = ControlFlow::Type::Return;
+    control.value().value = val;
+    return;
+  }
+
+  if(parent) {
+    parent->control_return(val);
+    return;
+  }
+
+  throw std::runtime_error("Could not find valid flow for return");
+}
 
 void Environment::print(int depth) const {
   std::string indent(depth * 2, ' ');
@@ -124,7 +184,11 @@ Value Environment::setup_fn_environment(std::vector<Value> &params, MR::Id fn_id
     fe->declare_variable(ident.identifier, ident.binding.isMutable());
     fe->set_variable(ident.identifier, params[i]);
   }
-  return fe->evaluate_fn(fn_id);
+
+  control_active();
+  auto result = fe->evaluate_fn(fn_id);
+  control_disable();
+  return result;
 }
 
 
@@ -160,13 +224,62 @@ Value Environment::evaluate_expr(MR::Id &expr) {
                    auto var = get_variable(val.path.to_string());
                    return var;
                  },
+                 [&](MR::LoopExpr &val) -> Value {
+                   control_active();
+                   while(1) {
+                     auto result = evaluate_block(val.block);
+                     auto controller = control.value();
+                     if(controller.type == ControlFlow::Type::Break) break;
+                     if(controller.type == ControlFlow::Type::Continue) continue;
+                     if(controller.type == ControlFlow::Type::Return) {
+                       if (controller.value.has_value()){
+                         return controller.value.value();
+                       }
+                       break;
+                     }
+                   }
+                   control_disable();
+                   return Value();
+                 },
+                 [&](MR::WhileExpr &val) -> Value {
+                   control_active();
+                   auto cond = evaluate_expr(val.expr);
+                   while(cond.as<bool>()) {
+                     auto result = evaluate_block(val.block);
+                     auto controller = control.value();
+                     if(controller.type == ControlFlow::Type::Break) break;
+                     if(controller.type == ControlFlow::Type::Continue) continue;
+                     if(controller.type == ControlFlow::Type::Return) {
+                       if (controller.value.has_value()){
+                         return controller.value.value();
+                       }
+                       break;
+                     }
+                     cond = evaluate_expr(val.expr);
+                   }
+                   control_disable();
+                   return Value();
+                 },
                  [&](MR::ReturnExpr &val) -> Value {
                    if(val.expr.has_value()) {
                      Value v = evaluate_expr(val.expr.value());
-                     control = ControlFlow(v, ControlFlow::Type::Return);
+                     control_return(v);
                      return v;
                    }
-                   control = ControlFlow(Value(), ControlFlow::Type::Return);
+                   control_return(std::nullopt);
+                   return Value();
+                 },
+                 [&](MR::ContinueExpr &val) -> Value {
+                   control_continue();
+                   return Value();
+                 },
+                 [&](MR::BreakExpr &val) -> Value {
+                   if(val.expr.has_value()) {
+                     Value v = evaluate_expr(val.expr.value());
+                     control_break(v);
+                     return v;
+                   }
+                   control_return(std::nullopt);
                    return Value();
                  },
                  [&](MR::IfExpr &val) -> Value {
@@ -250,7 +363,7 @@ Value Environment::evaluate_stmt(MR::Id &stmt) {
             else {
               throw std::runtime_error("invalid identifier in let stmt");
             }
-            return Value(); // return unit
+            return Value();
           },
           [&](MR::PrintStmt &val) -> Value {
               auto print_val = evaluate_expr(val.expr);
@@ -263,7 +376,7 @@ Value Environment::evaluate_stmt(MR::Id &stmt) {
       node->kind);
 }
 Environment::Environment(Environment *parent, MR::Mr &mr, P<MR::SymbolTable> symbol_table, Opt<Flow> flow)
-  : parent(parent), mr(mr), symbol_table(symbol_table), flow(flow), variables{} {
+  : parent(parent), mr(mr), symbol_table(symbol_table), variables{} {
     if(!symbol_table) return;
 
     for(auto &[name, symbol] : symbol_table->symbols) {
@@ -284,13 +397,8 @@ Value Environment::evaluate_block(MR::Id &block) {
 
   Value last_value{};
   for (auto &stmt : node->statements) {
-    if(control.type == ControlFlow::Type::None) {
-       last_value = be->evaluate_stmt(stmt);
-    }
-    else {
-      // return control.value;
-      return last_value;
-    }
+    if(control_should_stop()) break;
+    last_value = be->evaluate_stmt(stmt);
   }
   return last_value;
 }
@@ -303,10 +411,10 @@ Interpreter::Interpreter(P<TS::TypeContext> context, MR::Mr &mr)
 void Interpreter::interp(std::string &entry) {
   auto fn_entry = mr.tree->lookup(entry);
 
-  Environment root = Environment(nullptr, mr, mr.tree);
+  environment = std::make_unique<Environment>(Environment(nullptr, mr, mr.tree));
 
   if (fn_entry.has_value()) {
-    root.evaluate_fn(fn_entry.value()->id);
+    environment->evaluate_fn(fn_entry.value()->id);
   }
 }
 

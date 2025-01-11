@@ -1,12 +1,15 @@
 fn main()
 {
-  let y =
+    let x = 100;
+    let mut b = 5;
+    let y =
   {
-    let x = 3;
-    x + 1
-  }
-  // blocks are expressions
-  // (list of statements followed by expression) 
-  // if no final expression: value is ()
-  println!("{x}");
+    let x = b;
+    b += 10;
+    x + 1;
+  };
+
+    println!(b);
+    println!(x);
+    println!(y);
 }

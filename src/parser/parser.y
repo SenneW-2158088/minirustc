@@ -146,6 +146,7 @@
 %left STAR SLASH PERCENT
 %right NOT
 %left LPAREN RPAREN
+%left SEMI
 
 %nonassoc EQ PLUSEQ MINUSEQ STAREQ SLASHEQ PERCENTEQ
 %nonassoc ELSE
@@ -233,7 +234,7 @@ statement
     ;
 
 local
-    : pattern typedecl.opt { $$ = MU<Local>(Local::makeDecl(ast->getId(), std::move($1), std::move($2))); }
+    : pattern typedecl.opt SEMI { $$ = MU<Local>(Local::makeDecl(ast->getId(), std::move($1), std::move($2))); }
     | pattern typedecl.opt init { $$ = MU<Local>(Local::makeInit(ast->getId(), std::move($1), std::move($2), std::move($3))); }
     ;
 
@@ -384,9 +385,9 @@ loop_expr
     ;
 
 literal_expr
-    : INTEGER_LITERAL           { $$ = MU<Lit>(Lit::makeInteger(ast->getId(),$1)); }
+    : STR_LITERAL               { $$ = MU<Lit>(Lit::makeStr(ast->getId(),$1)); }
+    | INTEGER_LITERAL           { $$ = MU<Lit>(Lit::makeInteger(ast->getId(),$1)); }
     | FLOAT_LITERAL             { $$ = MU<Lit>(Lit::makeFloat(ast->getId(),$1)); }
-    | STR_LITERAL               { $$ = MU<Lit>(Lit::makeStr(ast->getId(),$1)); }
     | BOOLEAN_LITERAL           { $$ = MU<Lit>(Lit::makeBoolean(ast->getId(),$1)); }
     ;
 
